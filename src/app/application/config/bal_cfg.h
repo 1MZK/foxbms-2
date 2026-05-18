@@ -48,63 +48,62 @@
  * @ingroup DRIVERS_CONFIGURATION
  * @prefix  BAL
  *
- * @brief   Header for the configuration for the driver for balancing
- * @details TODO
+ * @brief   均衡驱动配置的头文件
+ * @details 本文件包含了电池均衡驱动相关的宏定义、参数配置及函数声明
  */
 
 #ifndef FOXBMS__BAL_CFG_H_
 #define FOXBMS__BAL_CFG_H_
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
-/** BAL state machine short time definition in 100*ms */
+/** 均衡状态机短时间定义，单位：100*ms */
 #define BAL_FSM_SHORTTIME_100ms (1u)
 
-/** BAL state machine long time definition in 100*ms */
-
+/** 均衡状态机长时间定义，单位：100*ms */
 #define BAL_FSM_LONGTIME_100ms (50u)
 
-/** BAL state machine balancing time in 100*ms */
+/** 均衡状态机均衡执行时间，单位：100*ms */
 #define BAL_FSM_BALANCING_TIME_100ms (10u)
 
-/** default value for the BAL voltage threshold */
+/** 均衡电压阈值的默认值，单位：mV */
 #define BAL_DEFAULT_THRESHOLD_mV (200)
 
-/** maximum value that BAL voltage threshold may take */
+/** 均衡电压阈值允许设置的最大值，单位：mV */
 #define BAL_MAXIMUM_THRESHOLD_mV (5000)
 
-/** minimum value that BAL voltage threshold may take */
+/** 均衡电压阈值允许设置的最小值，单位：mV */
 #define BAL_MINIMUM_THRESHOLD_mV (0)
 
-/** BAL hysteresis for voltage threshold when balancing was finished in mV */
+/** 均衡结束时的电压阈值滞后量（回差），单位：mV */
 #define BAL_HYSTERESIS_mV (200)
 
-/** BAL lower voltage limit in MV */
+/** 允许开启均衡的电压下限，单位：mV */
 #define BAL_LOWER_VOLTAGE_LIMIT_mV (2000)
 
-/** BAL upper temperature limit in deci &deg;C */
+/** 允许开启均衡的温度上限，单位：0.1°C (deci °C) */
 #define BAL_UPPER_TEMPERATURE_LIMIT_ddegC (700)
 
-/*========== Extern Constant and Variable Declarations ======================*/
+/*========== 外部常量与变量声明 ==============================================*/
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 ===================================================*/
 /**
- * @brief   set balancing threshold
- * @param   threshold_mV threshold in mV
+ * @brief   设置均衡电压阈值
+ * @param   threshold_mV 均衡阈值，单位：mV
  */
 extern void BAL_SetBalancingThreshold(int32_t threshold_mV);
 
 /**
- * @brief   get balancing threshold
- * @return  balancing threshold in mV
+ * @brief   获取均衡电压阈值
+ * @return  当前均衡阈值，单位：mV
  */
 extern int32_t BAL_GetBalancingThreshold_mV(void);
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
+/*========== 外部化的静态函数原型（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif
 

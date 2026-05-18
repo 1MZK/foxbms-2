@@ -48,15 +48,14 @@
  * @ingroup DRIVERS
  * @prefix  CAN
  *
- * @brief   Headers for the configuration for the CAN module
- * @details The activation and the length of the message buffers as well as the
- *          number of the messages that are received are to be configured here.
+ * @brief   CAN模块配置的头文件
+ * @details 在此处配置消息缓冲区的激活状态、长度以及接收的消息数量。
  */
 
 #ifndef FOXBMS__CAN_CFG_H_
 #define FOXBMS__CAN_CFG_H_
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 #include "foxbms_config.h"
 
 #include "HL_can.h"
@@ -65,63 +64,67 @@
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
 /* ****************************************************************************
- *  CAN NODE OPTIONS
+ *  CAN节点选项
  *****************************************************************************/
-/** CAN node configuration struct */
+/** CAN节点配置结构体 */
 typedef struct {
-    canBASE_t *canNodeRegister; /*!< register on which the CAN interface is connected */
+    canBASE_t *canNodeRegister; /*!< CAN接口所连接的寄存器 */
 } CAN_NODE_s;
 
-/** CAN node defines @{*/
+/** CAN节点定义 @{*/
 #define CAN_NODE_1 ((CAN_NODE_s *)&can_node1)
 #define CAN_NODE_2 ((CAN_NODE_s *)&can_node2Isolated)
 
-#define CAN_NODE_DEBUG_MESSAGE       (CAN_NODE_1)
-#define CAN_NODE_IMD                 (CAN_NODE_1)
-#define CAN_NODE_FATAL_ERROR_MESSAGE (CAN_NODE_1)
-#define CAN_NODE_CURRENT_SENSOR      (CAN_NODE_1)
+#define CAN_NODE_DEBUG_MESSAGE       (CAN_NODE_1) /*!< 调试消息使用的CAN节点 */
+#define CAN_NODE_IMD                 (CAN_NODE_1) /*!< 绝缘监测(IMD)使用的CAN节点 */
+#define CAN_NODE_FATAL_ERROR_MESSAGE (CAN_NODE_1) /*!< 致命错误消息使用的CAN节点 */
+#define CAN_NODE_CURRENT_SENSOR      (CAN_NODE_1) /*!< 电流传感器使用的CAN节点 */
 #if (defined(FOXBMS_AFE_DRIVER_DEBUG_CAN) && (FOXBMS_AFE_DRIVER_DEBUG_CAN == 1))
-#define CAN_NODE_RX_CELL_VOLTAGES     (CAN_NODE_1)
-#define CAN_NODE_RX_CELL_TEMPERATURES (CAN_NODE_1)
+#define CAN_NODE_RX_CELL_VOLTAGES     (CAN_NODE_1) /*!< 接收单体电压使用的CAN节点 */
+#define CAN_NODE_RX_CELL_TEMPERATURES (CAN_NODE_1) /*!< 接收单体温度使用的CAN节点 */
 #endif
 /**@}*/
 
 /**
- * Configuration of CAN transceiver pins to the respective port expander pins.
+ * CAN收发器引脚到相应端口扩展器引脚的配置。
  * @{
  */
-/** IO register to which the CAN1 is connected */
+/** CAN1所连接的IO寄存器方向控制 */
 #define CAN_CAN1_IO_REG_DIR  (hetREG2->DIR)
+/** CAN1所连接的IO寄存器数据输出 */
 #define CAN_CAN1_IO_REG_DOUT (hetREG2->DOUT)
+/** CAN1使能引脚 */
 #define CAN_CAN1_ENABLE_PIN  (18u)
+/** CAN1待机引脚 */
 #define CAN_CAN1_STANDBY_PIN (23u)
+/** CAN2使能引脚 */
 #define CAN_CAN2_ENABLE_PIN  (PEX_PORT_0_PIN_2)
+/** CAN2待机引脚 */
 #define CAN_CAN2_STANDBY_PIN (PEX_PORT_0_PIN_3)
 /**@}*/
 
-/** Maximum ID if 11 bits are used */
+/** 使用11位ID时的最大ID值 */
 #define CAN_MAX_11BIT_ID (2048u)
-/** Maximum length of Data Length Code */
+/** 数据长度代码(DLC)的最大长度 */
 #define CAN_MAX_DLC (8u)
-/** Default DLC */
+/** 默认数据长度代码(DLC) */
 #define CAN_DEFAULT_DLC (8u)
-/** Default DLC for messages that are defined by the foxBMS project, i.e., not
- * defined by third party software and/or hardware. */
+/** foxBMS项目自定义消息的默认DLC（即非第三方软件/硬件定义的消息） */
 #define CAN_FOXBMS_MESSAGES_DEFAULT_DLC (8u)
-/** One bit length for configuration of can message layout */
+/** 用于CAN消息布局配置的1位长度 */
 #define CAN_BIT (1u)
 
 #if (defined(FOXBMS_AFE_DRIVER_DEBUG_CAN) && (FOXBMS_AFE_DRIVER_DEBUG_CAN == 1))
-/** The number of cell voltages received per can message */
+/** 每条CAN消息接收的单体电压数量 */
 #define CAN_NUM_OF_VOLTAGES_IN_CAN_CELL_VOLTAGES_MSG (4u)
-/** The number of cell temperatures received per can message */
+/** 每条CAN消息接收的单体温度数量 */
 #define CAN_NUM_OF_TEMPERATURES_IN_CAN_CELL_TEMPERATURES_MSG (6u)
 #endif
 
-/** An offset of zero for can signal preparation */
+/** CAN信号准备时的零偏移量 */
 #define CAN_SIGNAL_OFFSET_0 (0.0f)
 
 /* **************************************************************************************
@@ -172,146 +175,152 @@ typedef struct {
  *                                      DataLE  =  DataBE
  * \endverbatim
  */
+C
+ 复制
+ 插入
+ 新文件
+
+/** CAN字节序枚举 */
 typedef enum {
-    CAN_LITTLE_ENDIAN,
-    CAN_BIG_ENDIAN,
+    CAN_LITTLE_ENDIAN, /*!< 小端模式 */
+    CAN_BIG_ENDIAN,    /*!< 大端模式 */
 } CAN_ENDIANNESS_e;
 
-/** CAN identifier type. Standard or extended identifier */
+/** CAN标识符类型：标准标识符或扩展标识符 */
 typedef enum {
-    CAN_STANDARD_IDENTIFIER_11_BIT,
-    CAN_EXTENDED_IDENTIFIER_29_BIT,
-    CAN_INVALID_TYPE,
+    CAN_STANDARD_IDENTIFIER_11_BIT, /*!< 标准11位标识符 */
+    CAN_EXTENDED_IDENTIFIER_29_BIT, /*!< 扩展29位标识符 */
+    CAN_INVALID_TYPE,               /*!< 无效类型 */
 } CAN_IDENTIFIER_TYPE_e;
 
-/** Buffer element used to store the ID and data of a CAN RX message */
+/** 缓冲区元素，用于存储CAN接收消息的ID和数据 */
 typedef struct {
-    CAN_NODE_s *canNode;          /*!< CAN node on which the message has been received */
-    uint32_t id;                  /*!< ID of the CAN message */
-    CAN_IDENTIFIER_TYPE_e idType; /*!< Standard or Extended identifier */
-    uint8_t data[CAN_MAX_DLC];    /*!< payload of the CAN message */
+    CAN_NODE_s *canNode;          /*!< 接收到该消息的CAN节点 */
+    uint32_t id;                  /*!< CAN消息的ID */
+    CAN_IDENTIFIER_TYPE_e idType; /*!< 标准或扩展标识符 */
+    uint8_t data[CAN_MAX_DLC];    /*!< CAN消息的有效载荷(数据) */
 } CAN_BUFFER_ELEMENT_s;
 
 #if (defined(FOXBMS_AFE_DRIVER_DEBUG_CAN) && (FOXBMS_AFE_DRIVER_DEBUG_CAN == 1))
-/** data unit to be transferred in ftsk_canToAfeCellTemperaturesQueue */
+/** 用于在 ftsk_canToAfeCellTemperaturesQueue 中传输的数据单元 */
 typedef struct {
-    uint8_t muxValue;
-    bool invalidFlag[CAN_NUM_OF_TEMPERATURES_IN_CAN_CELL_TEMPERATURES_MSG];
-    int16_t cellTemperature[CAN_NUM_OF_TEMPERATURES_IN_CAN_CELL_TEMPERATURES_MSG];
+    uint8_t muxValue;                                                /*!< 复用值 */
+    bool invalidFlag[CAN_NUM_OF_TEMPERATURES_IN_CAN_CELL_TEMPERATURES_MSG]; /*!< 温度无效标志 */
+    int16_t cellTemperature[CAN_NUM_OF_TEMPERATURES_IN_CAN_CELL_TEMPERATURES_MSG]; /*!< 电池温度值 */
 } CAN_CAN2AFE_CELL_TEMPERATURES_QUEUE_s;
-/** data unit to be transferred in ftsk_canToAfeCellVoltagesQueue */
+
+/** 用于在 ftsk_canToAfeCellVoltagesQueue 中传输的数据单元 */
 typedef struct {
-    uint8_t muxValue;
-    bool invalidFlag[CAN_NUM_OF_VOLTAGES_IN_CAN_CELL_VOLTAGES_MSG];
-    uint16_t cellVoltage[CAN_NUM_OF_VOLTAGES_IN_CAN_CELL_VOLTAGES_MSG];
+    uint8_t muxValue;                                        /*!< 复用值 */
+    bool invalidFlag[CAN_NUM_OF_VOLTAGES_IN_CAN_CELL_VOLTAGES_MSG]; /*!< 电压无效标志 */
+    uint16_t cellVoltage[CAN_NUM_OF_VOLTAGES_IN_CAN_CELL_VOLTAGES_MSG]; /*!< 电池电压值 */
 } CAN_CAN2AFE_CELL_VOLTAGES_QUEUE_s;
 #endif
 
-/** composite type for storing and passing on the local database table handles */
+/** 复合类型，用于存储和传递本地数据库表的句柄 */
 typedef struct {
-    OS_QUEUE *pQueueImd;                                  /*!< handle of the message queue */
-    DATA_BLOCK_CELL_VOLTAGE_s *pTableCellVoltage;         /*!< database entry: cell voltages */
-    DATA_BLOCK_CELL_TEMPERATURE_s *pTableCellTemperature; /*!< database entry: cell temperatures */
-    DATA_BLOCK_CURRENT_s *pTableCurrent;                  /*!< database entry: current measurements */
+    OS_QUEUE *pQueueImd;                                  /*!< 消息队列句柄 */
+    DATA_BLOCK_CELL_VOLTAGE_s *pTableCellVoltage;         /*!< 数据库条目：单体电压 */
+    DATA_BLOCK_CELL_TEMPERATURE_s *pTableCellTemperature; /*!< 数据库条目：单体温度 */
+    DATA_BLOCK_CURRENT_s *pTableCurrent;                  /*!< 数据库条目：电流测量值 */
     DATA_BLOCK_CURRENT_SENSOR_TEMPERATURE_s
-        *pTableCurrentSensorTemperature;                    /*!< database entry: current sensor temperature */
-    DATA_BLOCK_POWER_s *pTablePower;                        /*!< database entry: power measurements */
-    DATA_BLOCK_CURRENT_COUNTER_s *pTableCurrentCounter;     /*!< database entry: current counting */
-    DATA_BLOCK_ENERGY_COUNTER_s *pTableEnergyCounter;       /*!< database entry: energy counting */
-    DATA_BLOCK_SYSTEM_VOLTAGE_1_s *pTableSystemVoltage1;    /*!< database entry: system voltage U1 measurement */
-    DATA_BLOCK_SYSTEM_VOLTAGE_2_s *pTableSystemVoltage2;    /*!< database entry: voltage U1 measurement */
-    DATA_BLOCK_SYSTEM_VOLTAGE_3_s *pTableSystemVoltage3;    /*!< database entry: voltage U1 measurement */
-    DATA_BLOCK_ERROR_STATE_s *pTableErrorState;             /*!< database entry: error state variables */
-    DATA_BLOCK_INSULATION_s *pTableInsulation;              /*!< database entry: insulation monitoring info */
-    DATA_BLOCK_MIN_MAX_s *pTableMinMax;                     /*!< database entry: min/max values */
-    DATA_BLOCK_MOL_FLAG_s *pTableMol;                       /*!< database entry: MOL flags */
-    DATA_BLOCK_MSL_FLAG_s *pTableMsl;                       /*!< database entry: MSL flags */
-    DATA_BLOCK_OPEN_WIRE_s *pTableOpenWire;                 /*!< database entry: open wire status */
-    DATA_BLOCK_PACK_VALUES_s *pTablePackValues;             /*!< database entry: pack values */
-    DATA_BLOCK_RSL_FLAG_s *pTableRsl;                       /*!< database entry: RSL flags */
-    DATA_BLOCK_SOC_s *pTableSoc;                            /*!< database entry: SOC values */
-    DATA_BLOCK_SOE_s *pTableSoe;                            /*!< database entry: SOE values */
-    DATA_BLOCK_SOF_s *pTableSof;                            /*!< database entry: SOF values */
-    DATA_BLOCK_SOH_s *pTableSoh;                            /*!< database entry: SOH values */
-    DATA_BLOCK_STATE_REQUEST_s *pTableStateRequest;         /*!< database entry: state requests */
-    DATA_BLOCK_AEROSOL_SENSOR_s *pTableAerosolSensor;       /*!< database entry: aerosol sensor measurements */
-    DATA_BLOCK_BALANCING_CONTROL_s *pTableBalancingControl; /*!< database entry: balancing information */
-    DATA_BLOCK_PHY_s *pTablePhy;                            /*!< database entry: PHY information */
+        *pTableCurrentSensorTemperature;                    /*!< 数据库条目：电流传感器温度 */
+    DATA_BLOCK_POWER_s *pTablePower;                        /*!< 数据库条目：功率测量值 */
+    DATA_BLOCK_CURRENT_COUNTER_s *pTableCurrentCounter;     /*!< 数据库条目：电流计数(库仑计) */
+    DATA_BLOCK_ENERGY_COUNTER_s *pTableEnergyCounter;       /*!< 数据库条目：能量计数 */
+    DATA_BLOCK_SYSTEM_VOLTAGE_1_s *pTableSystemVoltage1;    /*!< 数据库条目：系统电压U1测量值 */
+    DATA_BLOCK_SYSTEM_VOLTAGE_2_s *pTableSystemVoltage2;    /*!< 数据库条目：电压U2测量值 */
+    DATA_BLOCK_SYSTEM_VOLTAGE_3_s *pTableSystemVoltage3;    /*!< 数据库条目：电压U3测量值 */
+    DATA_BLOCK_ERROR_STATE_s *pTableErrorState;             /*!< 数据库条目：错误状态变量 */
+    DATA_BLOCK_INSULATION_s *pTableInsulation;              /*!< 数据库条目：绝缘监测信息 */
+    DATA_BLOCK_MIN_MAX_s *pTableMinMax;                     /*!< 数据库条目：最小/最大值 */
+    DATA_BLOCK_MOL_FLAG_s *pTableMol;                       /*!< 数据库条目：MOL(最大运行限制)标志 */
+    DATA_BLOCK_MSL_FLAG_s *pTableMsl;                       /*!< 数据库条目：MSL(最大安全限制)标志 */
+    DATA_BLOCK_OPEN_WIRE_s *pTableOpenWire;                 /*!< 数据库条目：开路状态 */
+    DATA_BLOCK_PACK_VALUES_s *pTablePackValues;             /*!< 数据库条目：电池包数值 */
+    DATA_BLOCK_RSL_FLAG_s *pTableRsl;                       /*!< 数据库条目：RSL(推荐安全限制)标志 */
+    DATA_BLOCK_SOC_s *pTableSoc;                            /*!< 数据库条目：SOC值 */
+    DATA_BLOCK_SOE_s *pTableSoe;                            /*!< 数据库条目：SOE值 */
+    DATA_BLOCK_SOF_s *pTableSof;                            /*!< 数据库条目：SOF值 */
+    DATA_BLOCK_SOH_s *pTableSoh;                            /*!< 数据库条目：SOH值 */
+    DATA_BLOCK_STATE_REQUEST_s *pTableStateRequest;         /*!< 数据库条目：状态请求 */
+    DATA_BLOCK_AEROSOL_SENSOR_s *pTableAerosolSensor;       /*!< 数据库条目：气溶胶传感器测量值 */
+    DATA_BLOCK_BALANCING_CONTROL_s *pTableBalancingControl; /*!< 数据库条目：均衡信息 */
+    DATA_BLOCK_PHY_s *pTablePhy;                            /*!< 数据库条目：PHY(物理层)信息 */
 } CAN_SHIM_s;
 
-/** definition of a CAN message (without data) */
+/** CAN消息的定义（不包含数据部分） */
 typedef struct {
-    uint32_t id;                  /*!< message ID */
-    CAN_IDENTIFIER_TYPE_e idType; /*!< Standard or Extended identifier */
-    uint8_t dlc;                  /*!< data length */
-    CAN_ENDIANNESS_e endianness;  /*!< Byte order (big or little endian) */
+    uint32_t id;                  /*!< 消息ID */
+    CAN_IDENTIFIER_TYPE_e idType; /*!< 标准或扩展标识符 */
+    uint8_t dlc;                  /*!< 数据长度代码 */
+    CAN_ENDIANNESS_e endianness;  /*!< 字节序(大端或小端) */
 } CAN_MESSAGE_PROPERTIES_s;
 
-/** timing information of a CAN TX message */
+/** CAN发送(TX)消息的时序信息 */
 typedef struct {
-    uint32_t period; /*!< CAN message cycle time */
-    uint32_t phase;  /*!< CAN message startup (first send) offset */
+    uint32_t period; /*!< CAN消息周期时间 */
+    uint32_t phase;  /*!< CAN消息启动(首次发送)偏移量 */
 } CAN_TX_MESSAGE_TIMING_s;
 
-/** timing information of a CAN RX message */
+/** CAN接收(RX)消息的时序信息 */
 typedef struct {
-    uint32_t period; /*!< expected CAN message cycle time */
+    uint32_t period; /*!< 期望的CAN消息周期时间 */
 } CAN_RX_MESSAGE_TIMING_s;
 
-/** type definition for tx callback functions used in CAN messages */
+/** CAN消息中使用的发送回调函数的类型定义 */
 typedef uint32_t (*CAN_TxCallbackFunction_f)(
     CAN_MESSAGE_PROPERTIES_s message,
     uint8_t *canData,
     uint8_t *pMuxId,
     const CAN_SHIM_s *const kpkCanShim);
 
-/** type definition for rx callback functions used in CAN messages */
+/** CAN消息中使用的接收回调函数的类型定义 */
 typedef uint32_t (*CAN_RxCallbackFunction_f)(
     CAN_MESSAGE_PROPERTIES_s message,
     const uint8_t *const kpkCanData,
     const CAN_SHIM_s *const kpkCanShim);
 
-/** type definition for structure of a TX CAN message */
+/** CAN发送(TX)消息结构体的类型定义 */
 typedef struct {
-    CAN_NODE_s *canNode;                       /*!< CAN node on which the message is transmitted */
-    CAN_MESSAGE_PROPERTIES_s message;          /*!< CAN message */
-    CAN_TX_MESSAGE_TIMING_s timing;            /*!< time and phase */
-    CAN_TxCallbackFunction_f callbackFunction; /*!< CAN message callback after message is sent */
-    uint8_t *pMuxId; /*!< for multiplexed signals: callback can use this as pointer to a mux variable, NULL_PTR if
-                            unused*/
+    CAN_NODE_s *canNode;                       /*!< 传输该消息的CAN节点 */
+    CAN_MESSAGE_PROPERTIES_s message;          /*!< CAN消息属性 */
+    CAN_TX_MESSAGE_TIMING_s timing;            /*!< 周期和相位 */
+    CAN_TxCallbackFunction_f callbackFunction; /*!< 消息发送后的CAN回调函数 */
+    uint8_t *pMuxId;                           /*!< 对于复用信号：回调函数可将其用作复用变量的指针，未使用时为NULL_PTR */
 } CAN_TX_MESSAGE_TYPE_s;
 
-/* TODO: timing check not implemented for RX messages! */
-/** type definition for structure of an RX CAN message */
+/* TODO: 接收消息的时间检查尚未实现！ */
+/** CAN接收(RX)消息结构体的类型定义 */
 typedef struct {
-    CAN_NODE_s *canNode;                       /*!< CAN node on which the message is received */
-    CAN_MESSAGE_PROPERTIES_s message;          /*!< CAN message */
-    CAN_RX_MESSAGE_TIMING_s timing;            /*!< time and phase */
-    CAN_RxCallbackFunction_f callbackFunction; /*!< CAN message callback after message is received */
+    CAN_NODE_s *canNode;                       /*!< 接收该消息的CAN节点 */
+    CAN_MESSAGE_PROPERTIES_s message;          /*!< CAN消息属性 */
+    CAN_RX_MESSAGE_TIMING_s timing;            /*!< 周期和相位 */
+    CAN_RxCallbackFunction_f callbackFunction; /*!< 消息接收后的CAN回调函数 */
 } CAN_RX_MESSAGE_TYPE_s;
 
-/*========== Extern Constant and Variable Declarations ======================*/
-/** variable for storing and passing on the local database table handles */
+/*========== 外部常量与变量声明 ==============================================*/
+/** 用于存储和传递本地数据库表句柄的变量 */
 extern const CAN_SHIM_s can_kShim;
 
-/** CAN node configurations for CAN1 and CAN2 (isolated) @{*/
+/** CAN1和CAN2(隔离)的CAN节点配置 @{*/
 extern const CAN_NODE_s can_node1;
 extern const CAN_NODE_s can_node2Isolated;
 /**@}*/
 
-/** CAN RX and TX message configuration structs @{*/
+/** CAN接收和发送消息配置结构体 @{*/
 extern const CAN_TX_MESSAGE_TYPE_s can_txMessages[];
 extern const CAN_RX_MESSAGE_TYPE_s can_rxMessages[];
 /**@}*/
 
-/** array length for transmission CAN0 message definition @{*/
+/** 发送和接收CAN消息定义的数组长度 @{*/
 extern const uint8_t can_txMessagesLength;
 extern const uint8_t can_rxMessagesLength;
 /**@}*/
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 ===================================================*/
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
+/*========== 外部化的静态函数原型（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif
 

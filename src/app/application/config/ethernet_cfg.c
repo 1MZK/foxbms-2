@@ -39,41 +39,34 @@
  *
  */
 
-/**
- * @file    ethernet_cfg.c
- * @author  foxBMS Team
- * @date    2025-30-05 (date of creation)
- * @updated 2026-04-20 (date of last update)
- * @version v1.11.0
- * @ingroup DRIVERS
- * @prefix  ETH
- *
- * @brief   Configuration for the ethernet module
- * @details This includes IP and EMAC-Address and other general network settings.
- */
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 
 #include "ethernet_cfg.h"
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
-/*========== Static Constant and Variable Definitions =======================*/
+/*========== 静态常量与变量定义 ==============================================*/
 
-/*========== Extern Constant and Variable Definitions =======================*/
+/*========== 外部常量与变量定义 ==============================================*/
 
+/* 以太网MAC地址配置 */
 const uint8_t eth_emacAddress[ETH_HARDWARE_ADDRESS_LENGTH] = {0x0u, 0x08u, 0xEEu, 0x03u, 0xA6u, 0x6Cu};
+/* 设备IP地址配置 */
 const uint8_t eth_ipAddress[ETH_IP_ADDRESS_LENGTH]         = {169u, 254u, 107u, 24u};
+/* 子网掩码配置 */
 const uint8_t eth_netMask[4u]                              = {255u, 255u, 0u, 0u};
+/* 网关地址配置 */
 const uint8_t eth_gatewayAddress[4u]                       = {169u, 254u, 107u, 1u};
+/* DNS服务器地址配置 */
 const uint8_t eth_dnsServerAddress[4u]                     = {0u, 0u, 0u, 0u};
 
-/*========== Static Function Prototypes =====================================*/
+/*========== 静态函数原型 ===================================================*/
 
-/*========== Static Function Implementations ================================*/
+/*========== 静态函数实现 ====================================================*/
 
-/*========== Extern Function Implementations ================================*/
+/*========== 外部函数实现 ====================================================*/
 
-/*========== Externalized Static Function Implementations (Unit Test) =======*/
+/*========== 外部化的静态函数实现（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif

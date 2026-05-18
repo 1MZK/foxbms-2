@@ -59,36 +59,48 @@
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
-/*========== Static Constant and Variable Definitions =======================*/
-/** balancing voltage threshold in mV */
+/*========== 静态常量与变量定义 ==============================================*/
+/** 均衡电压阈值，单位：mV */
 static int32_t bal_threshold_mV = BAL_DEFAULT_THRESHOLD_mV;
 
-/*========== Extern Constant and Variable Definitions =======================*/
+/*========== 外部常量与变量定义 ==============================================*/
 
-/*========== Static Function Prototypes =====================================*/
+/*========== 静态函数原型 ===================================================*/
 
-/*========== Static Function Implementations ================================*/
+/*========== 静态函数实现 ====================================================*/
 
-/*========== Extern Function Implementations ================================*/
+/*========== 外部函数实现 ====================================================*/
+/**
+ * @brief 设置电池均衡电压阈值，并进行上下限边界保护
+ * @param threshold_mV 要设置的均衡阈值，单位：mV
+ */
 extern void BAL_SetBalancingThreshold(int32_t threshold_mV) {
     int32_t boundedThreshold_mV = threshold_mV;
+    /* 限制阈值不超过最大允许值 */
     if (boundedThreshold_mV > BAL_MAXIMUM_THRESHOLD_mV) {
         boundedThreshold_mV = BAL_MAXIMUM_THRESHOLD_mV;
     }
+    /* 限制阈值不低于最小允许值 */
     if (boundedThreshold_mV < BAL_MINIMUM_THRESHOLD_mV) {
         boundedThreshold_mV = BAL_MINIMUM_THRESHOLD_mV;
     }
+    /* 进入临界区保护，防止读写冲突 */
     OS_EnterTaskCritical();
     bal_threshold_mV = boundedThreshold_mV;
+    /* 退出临界区 */
     OS_ExitTaskCritical();
 }
 
+/**
+ * @brief 获取当前的均衡电压阈值
+ * @return 当前的均衡阈值，单位：mV
+ */
 extern int32_t BAL_GetBalancingThreshold_mV(void) {
     return bal_threshold_mV;
 }
 
-/*========== Externalized Static Function Implementations (Unit Test) =======*/
+/*========== 外部化的静态函数实现（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif

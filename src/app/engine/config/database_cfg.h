@@ -48,14 +48,14 @@
  * @ingroup ENGINE_CONFIGURATION
  * @prefix  DATA
  *
- * @brief   Database configuration header
- * @details Provides interfaces to database configuration
+ * @brief   数据库配置头文件
+ * @details 提供数据库配置的接口
  */
 
 #ifndef FOXBMS__DATABASE_CFG_H_
 #define FOXBMS__DATABASE_CFG_H_
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 
 #include "battery_system_cfg.h"
 #include "bms-slave_cfg.h"
@@ -66,661 +66,619 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
-/** configuration struct of database channel (data block) */
+/*========== 宏与定义 =======================================================*/
+/** 数据库通道(数据块)的配置结构体 */
 typedef struct {
-    void *pDatabaseEntry; /*!< pointer to the database entry */
-    uint32_t dataLength;  /*!< length of the entry */
+    void *pDatabaseEntry; /*!< 指向数据库条目的指针 */
+    uint32_t dataLength;  /*!< 条目的长度 */
 } DATA_BASE_s;
 
-/** data block identification numbers */
+/** 数据块标识号 (ID) 枚举 */
 typedef enum {
-    DATA_BLOCK_ID_ADC_VOLTAGE,
-    DATA_BLOCK_ID_AEROSOL_SENSOR,
-    DATA_BLOCK_ID_ALL_GPIO_VOLTAGES_BASE,
-    DATA_BLOCK_ID_ALL_GPIO_VOLTAGES_REDUNDANCY0,
-    DATA_BLOCK_ID_BALANCING_CONTROL,
-    DATA_BLOCK_ID_BALANCING_FEEDBACK_BASE,
-    DATA_BLOCK_ID_BALANCING_FEEDBACK_REDUNDANCY0,
-    DATA_BLOCK_ID_CELL_TEMPERATURE,
-    DATA_BLOCK_ID_CELL_TEMPERATURE_BASE,
-    DATA_BLOCK_ID_CELL_TEMPERATURE_REDUNDANCY0,
-    DATA_BLOCK_ID_CELL_VOLTAGE,
-    DATA_BLOCK_ID_CELL_VOLTAGE_BASE,
-    DATA_BLOCK_ID_CELL_VOLTAGE_REDUNDANCY0,
-    DATA_BLOCK_ID_CONTACTOR_FEEDBACK,
-    DATA_BLOCK_ID_CURRENT,
-    DATA_BLOCK_ID_CURRENT_SENSOR_TEMPERATURE,
-    DATA_BLOCK_ID_POWER,
-    DATA_BLOCK_ID_CURRENT_COUNTER,
-    DATA_BLOCK_ID_ENERGY_COUNTER,
-    DATA_BLOCK_ID_SYSTEM_VOLTAGE_1,
-    DATA_BLOCK_ID_SYSTEM_VOLTAGE_2,
-    DATA_BLOCK_ID_SYSTEM_VOLTAGE_3,
-    DATA_BLOCK_ID_DUMMY_FOR_SELF_TEST,
-    DATA_BLOCK_ID_ERROR_STATE,
-    DATA_BLOCK_ID_HTSEN,
-    DATA_BLOCK_ID_INSULATION,
-    DATA_BLOCK_ID_INTERLOCK_FEEDBACK,
-    DATA_BLOCK_ID_MIN_MAX,
-    DATA_BLOCK_ID_MOL_FLAG,
-    DATA_BLOCK_ID_MOVING_AVERAGE,
-    DATA_BLOCK_ID_MSL_FLAG,
-    DATA_BLOCK_ID_OPEN_WIRE_BASE,
-    DATA_BLOCK_ID_OPEN_WIRE_REDUNDANCY0,
-    DATA_BLOCK_ID_PACK_VALUES,
-    DATA_BLOCK_ID_RSL_FLAG,
-    DATA_BLOCK_ID_SLAVE_CONTROL,
-    DATA_BLOCK_ID_SOC,
-    DATA_BLOCK_ID_SOE,
-    DATA_BLOCK_ID_SOF,
-    DATA_BLOCK_ID_SOH,
-    DATA_BLOCK_ID_STATE_REQUEST,
-    DATA_BLOCK_ID_SYSTEM_STATE,
-    DATA_BLOCK_ID_PHY,
-    DATA_BLOCK_ID_MAX, /**< DO NOT CHANGE, MUST BE THE LAST ENTRY */
+    DATA_BLOCK_ID_ADC_VOLTAGE,                      /*!< ADC电压 */
+    DATA_BLOCK_ID_AEROSOL_SENSOR,                   /*!< 气溶胶传感器 */
+    DATA_BLOCK_ID_ALL_GPIO_VOLTAGES_BASE,           /*!< 所有GPIO电压基准 */
+    DATA_BLOCK_ID_ALL_GPIO_VOLTAGES_REDUNDANCY0,    /*!< 所有GPIO电压冗余0 */
+    DATA_BLOCK_ID_BALANCING_CONTROL,                /*!< 均衡控制 */
+    DATA_BLOCK_ID_BALANCING_FEEDBACK_BASE,          /*!< 均衡反馈基准 */
+    DATA_BLOCK_ID_BALANCING_FEEDBACK_REDUNDANCY0,   /*!< 均衡反馈冗余0 */
+    DATA_BLOCK_ID_CELL_TEMPERATURE,                 /*!< 单体温度 */
+    DATA_BLOCK_ID_CELL_TEMPERATURE_BASE,            /*!< 单体温度基准 */
+    DATA_BLOCK_ID_CELL_TEMPERATURE_REDUNDANCY0,     /*!< 单体温度冗余0 */
+    DATA_BLOCK_ID_CELL_VOLTAGE,                     /*!< 单体电压 */
+    DATA_BLOCK_ID_CELL_VOLTAGE_BASE,                /*!< 单体电压基准 */
+    DATA_BLOCK_ID_CELL_VOLTAGE_REDUNDANCY0,         /*!< 单体电压冗余0 */
+    DATA_BLOCK_ID_CONTACTOR_FEEDBACK,               /*!< 接触器反馈 */
+    DATA_BLOCK_ID_CURRENT,                          /*!< 电流 */
+    DATA_BLOCK_ID_CURRENT_SENSOR_TEMPERATURE,       /*!< 电流传感器温度 */
+    DATA_BLOCK_ID_POWER,                            /*!< 功率 */
+    DATA_BLOCK_ID_CURRENT_COUNTER,                  /*!< 电流计数(库仑计) */
+    DATA_BLOCK_ID_ENERGY_COUNTER,                   /*!< 能量计数 */
+    DATA_BLOCK_ID_SYSTEM_VOLTAGE_1,                 /*!< 系统电压U1 */
+    DATA_BLOCK_ID_SYSTEM_VOLTAGE_2,                 /*!< 系统电压U2 */
+    DATA_BLOCK_ID_SYSTEM_VOLTAGE_3,                 /*!< 系统电压U3 */
+    DATA_BLOCK_ID_DUMMY_FOR_SELF_TEST,              /*!< 自检用的虚拟块 */
+    DATA_BLOCK_ID_ERROR_STATE,                      /*!< 错误状态 */
+    DATA_BLOCK_ID_HTSEN,                            /*!< 温湿度传感器 */
+    DATA_BLOCK_ID_INSULATION,                       /*!< 绝缘监测 */
+    DATA_BLOCK_ID_INTERLOCK_FEEDBACK,               /*!< 互锁反馈 */
+    DATA_BLOCK_ID_MIN_MAX,                          /*!< 最小/最大值 */
+    DATA_BLOCK_ID_MOL_FLAG,                         /*!< MOL(最大运行限制)标志 */
+    DATA_BLOCK_ID_MOVING_AVERAGE,                   /*!< 滑动平均 */
+    DATA_BLOCK_ID_MSL_FLAG,                         /*!< MSL(最大安全限制)标志 */
+    DATA_BLOCK_ID_OPEN_WIRE_BASE,                   /*!< 开路基准 */
+    DATA_BLOCK_ID_OPEN_WIRE_REDUNDANCY0,            /*!< 开路冗余0 */
+    DATA_BLOCK_ID_PACK_VALUES,                      /*!< 电池包数值 */
+    DATA_BLOCK_ID_RSL_FLAG,                         /*!< RSL(推荐安全限制)标志 */
+    DATA_BLOCK_ID_SLAVE_CONTROL,                    /*!< 从控控制 */
+    DATA_BLOCK_ID_SOC,                              /*!< SOC(荷电状态) */
+    DATA_BLOCK_ID_SOE,                              /*!< SOE(能量状态) */
+    DATA_BLOCK_ID_SOF,                              /*!< SOF(功能状态) */
+    DATA_BLOCK_ID_SOH,                              /*!< SOH(健康状态) */
+    DATA_BLOCK_ID_STATE_REQUEST,                    /*!< 状态请求 */
+    DATA_BLOCK_ID_SYSTEM_STATE,                     /*!< 系统状态 */
+    DATA_BLOCK_ID_PHY,                              /*!< PHY(物理层) */
+    DATA_BLOCK_ID_MAX,                              /**< 请勿更改，必须是最后一个条目 */
 } DATA_BLOCK_ID_e;
 
 FAS_STATIC_ASSERT(
     (int32_t)DATA_BLOCK_ID_MAX < (int32_t)UINT8_MAX,
-    "Maximum number of database entries exceeds UINT8_MAX; adapted length "
-    "checking in DATA_Initialize and DATA_IterateOverDatabaseEntries");
+    "数据库条目的最大数量超过了UINT8_MAX；请调整DATA_Initialize和DATA_IterateOverDatabaseEntries中的长度检查");
 
-/** data block header */
+/** 数据块头结构体 */
 typedef struct {
-    DATA_BLOCK_ID_e uniqueId;   /*!< uniqueId of database entry */
-    uint32_t timestamp;         /*!< timestamp of last database update */
-    uint32_t previousTimestamp; /*!< timestamp of previous database update */
+    DATA_BLOCK_ID_e uniqueId;   /*!< 数据库条目的唯一标识ID */
+    uint32_t timestamp;         /*!< 上次数据库更新的时间戳 */
+    uint32_t previousTimestamp; /*!< 上上次数据库更新的时间戳 */
 } DATA_BLOCK_HEADER_s;
 
-/** data block struct of cell voltage */
+/** 单体电压数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                  /*!< Data block header */
-    uint8_t state;                               /*!< for future use */
-    int32_t stringVoltage_mV[BS_NR_OF_STRINGS];  /*!< cumulated cell voltage per string */
-    bool invalidStringVoltage[BS_NR_OF_STRINGS]; /*!< false -> valid, true -> invalid */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                  /*!< 数据块头 */
+    uint8_t state;                               /*!< 保留供将来使用 */
+    int32_t stringVoltage_mV[BS_NR_OF_STRINGS];  /*!< 每个串的累积单体电压，单位：mV */
+    bool invalidStringVoltage[BS_NR_OF_STRINGS]; /*!< false -> 有效, true -> 无效 */
     int16_t cellVoltage_mV[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                          [BS_NR_OF_CELL_BLOCKS_PER_MODULE]; /*!< cell voltage */
+                          [BS_NR_OF_CELL_BLOCKS_PER_MODULE];                 /*!< 单体电压，单位：mV */
     bool invalidCellVoltage[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                           [BS_NR_OF_CELL_BLOCKS_PER_MODULE];                 /*!< false -> valid, true -> invalid */
-    uint16_t nrValidCellVoltages[BS_NR_OF_STRINGS];                           /*!< number of valid voltages */
-    uint32_t moduleVoltage_mV[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< cumulated cell voltage per module */
-    bool invalidModuleVoltage[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< false -> valid, true -> invalid */
+                           [BS_NR_OF_CELL_BLOCKS_PER_MODULE];                 /*!< false -> 有效, true -> 无效 */
+    uint16_t nrValidCellVoltages[BS_NR_OF_STRINGS];                           /*!< 有效电压的数量 */
+    uint32_t moduleVoltage_mV[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< 每个模块的累积单体电压，单位：mV */
+    bool invalidModuleVoltage[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< false -> 有效, true -> 无效 */
 } DATA_BLOCK_CELL_VOLTAGE_s;
 
-/** data block struct of cell temperatures */
+/** 单体温度数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    uint8_t state;              /*!< for future use */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    uint8_t state;              /*!< 保留供将来使用 */
     int16_t cellTemperature_ddegC[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                                 [BS_NR_OF_TEMP_SENSORS_PER_MODULE]; /*!< unit: deci &deg;C */
+                                 [BS_NR_OF_TEMP_SENSORS_PER_MODULE];     /*!< 单体温度，单位：0.1 °C */
     bool invalidCellTemperature[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                               [BS_NR_OF_TEMP_SENSORS_PER_MODULE]; /*!< false -> valid, true -> invalid */
-    uint16_t nrValidTemperatures[BS_NR_OF_STRINGS];                /*!< number of valid temperatures in each string */
+                               [BS_NR_OF_TEMP_SENSORS_PER_MODULE]; /*!< false -> 有效, true -> 无效 */
+    uint16_t nrValidTemperatures[BS_NR_OF_STRINGS];                /*!< 每个串中有效温度的数量 */
 } DATA_BLOCK_CELL_TEMPERATURE_s;
 
-/** data block struct of minimum and maximum values */
+/** 最小和最大值数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                               /*!< Data block header */
-    int16_t averageCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< average cell voltages, unit: mV */
-    int16_t minimumCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< minimum cell voltages, unit: mV */
-    int16_t previousMinimumCellVoltage_mV[BS_NR_OF_STRINGS];  /*!< previous minimum cell voltages, unit: mV */
-    int16_t maximumCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< maximum cell voltages, unit: mV */
-    int16_t previousMaximumCellVoltage_mV[BS_NR_OF_STRINGS];  /*!< previous maximum cell voltages, unit: mV */
-    uint16_t nrModuleMinimumCellVoltage[BS_NR_OF_STRINGS];    /*!< number of the module with minimum cell voltage */
-    uint16_t nrCellMinimumCellVoltage[BS_NR_OF_STRINGS];      /*!< number of the cell with minimum cell voltage */
-    uint16_t nrModuleMaximumCellVoltage[BS_NR_OF_STRINGS];    /*!< number of the module with maximum cell voltage */
-    uint16_t nrCellMaximumCellVoltage[BS_NR_OF_STRINGS];      /*!< number of the cell with maximum cell voltage */
-    uint16_t validMeasuredCellVoltages[BS_NR_OF_STRINGS];     /*!< number of valid measured cell voltages */
-    float_t averageTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< unit: deci &deg;C */
-    int16_t minimumTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< unit: deci &deg;C */
-    uint16_t nrModuleMinimumTemperature[BS_NR_OF_STRINGS];    /*!< number of the module with minimum temperature */
-    uint16_t nrSensorMinimumTemperature[BS_NR_OF_STRINGS];    /*!< number of the sensor with minimum temperature */
-    int16_t maximumTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< unit: deci &deg;C */
-    uint16_t nrModuleMaximumTemperature[BS_NR_OF_STRINGS];    /*!< number of the module with maximum temperature */
-    uint16_t nrSensorMaximumTemperature[BS_NR_OF_STRINGS];    /*!< number of the sensor with maximum temperature */
-    uint16_t validMeasuredCellTemperatures[BS_NR_OF_STRINGS]; /*!< number of valid measured cell temperatures */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                               /*!< 数据块头 */
+    int16_t averageCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< 平均单体电压，单位：mV */
+    int16_t minimumCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< 最低单体电压，单位：mV */
+    int16_t previousMinimumCellVoltage_mV[BS_NR_OF_STRINGS];  /*!< 上一次最低单体电压，单位：mV */
+    int16_t maximumCellVoltage_mV[BS_NR_OF_STRINGS];          /*!< 最高单体电压，单位：mV */
+    int16_t previousMaximumCellVoltage_mV[BS_NR_OF_STRINGS];  /*!< 上一次最高单体电压，单位：mV */
+    uint16_t nrModuleMinimumCellVoltage[BS_NR_OF_STRINGS];    /*!< 具有最低单体电压的模块编号 */
+    uint16_t nrCellMinimumCellVoltage[BS_NR_OF_STRINGS];      /*!< 具有最低单体电压的电芯编号 */
+    uint16_t nrModuleMaximumCellVoltage[BS_NR_OF_STRINGS];    /*!< 具有最高单体电压的模块编号 */
+    uint16_t nrCellMaximumCellVoltage[BS_NR_OF_STRINGS];      /*!< 具有最高单体电压的电芯编号 */
+    uint16_t validMeasuredCellVoltages[BS_NR_OF_STRINGS];     /*!< 有效测量单体电压的数量 */
+    float_t averageTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< 平均温度，单位：0.1 °C */
+    int16_t minimumTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< 最低温度，单位：0.1 °C */
+    uint16_t nrModuleMinimumTemperature[BS_NR_OF_STRINGS];    /*!< 具有最低温度的模块编号 */
+    uint16_t nrSensorMinimumTemperature[BS_NR_OF_STRINGS];    /*!< 具有最低温度的传感器编号 */
+    int16_t maximumTemperature_ddegC[BS_NR_OF_STRINGS];       /*!< 最高温度，单位：0.1 °C */
+    uint16_t nrModuleMaximumTemperature[BS_NR_OF_STRINGS];    /*!< 具有最高温度的模块编号 */
+    uint16_t nrSensorMaximumTemperature[BS_NR_OF_STRINGS];    /*!< 具有最高温度的传感器编号 */
+    uint16_t validMeasuredCellTemperatures[BS_NR_OF_STRINGS]; /*!< 有效测量单体温度的数量 */
 } DATA_BLOCK_MIN_MAX_s;
 
-/** data block struct of pack measurement values */
+/** 电池包测量值数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;       /*!< Data block header */
-    int32_t packCurrent_mA;           /*!< current in the whole battery pack, unit: mA */
-    uint8_t invalidPackCurrent;       /*!< bitmask if current is valid. 0->valid, 1->invalid */
-    int32_t batteryVoltage_mV;        /*!< voltage between negative and positive battery pole, unit: mV */
-    uint8_t invalidBatteryVoltage;    /*!< bitmask if voltage is valid. 0->valid, 1->invalid */
-    int32_t highVoltageBusVoltage_mV; /*!< voltage between negative battery pole and after positive main contactor,
-                                         unit: mV */
-    uint8_t invalidHvBusVoltage;      /*!< bitmask if voltage is valid. 0->valid, 1->invalid */
-    int32_t packPower_W;              /*!< power provided by respectively supplied to the battery pack, unit: W */
-    uint8_t invalidPackPower;         /*!< bitmask if power is valid. 0->valid, 1->invalid */
-    int32_t stringVoltage_mV[BS_NR_OF_STRINGS];     /*!< voltage of each string, unit: mV */
-    uint8_t invalidStringVoltage[BS_NR_OF_STRINGS]; /*!< bitmask if voltages are valid. 0->valid, 1->invalid */
-    int32_t stringCurrent_mA[BS_NR_OF_STRINGS];     /*!< current in each string, unit: mA */
-    uint8_t invalidStringCurrent[BS_NR_OF_STRINGS]; /*!< bitmask if currents are valid. 0->valid, 1->invalid */
-    int32_t stringPower_W[BS_NR_OF_STRINGS];        /*!< power of each string, unit: W */
-    uint8_t invalidStringPower[BS_NR_OF_STRINGS];   /*!< bitmask if power values are valid. 0->valid, 1->invalid */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;       /*!< 数据块头 */
+    int32_t packCurrent_mA;           /*!< 整个电池包的电流，单位：mA */
+    uint8_t invalidPackCurrent;       /*!< 电流是否有效的位掩码。0->有效, 1->无效 */
+    int32_t batteryVoltage_mV;        /*!< 电池正负极之间的电压，单位：mV */
+    uint8_t invalidBatteryVoltage;    /*!< 电压是否有效的位掩码。0->有效, 1->无效 */
+    int32_t highVoltageBusVoltage_mV; /*!< 电池负极与正极主接触器之后之间的电压(高压母线电压)，单位：mV */
+    uint8_t invalidHvBusVoltage;      /*!< 电压是否有效的位掩码。0->有效, 1->无效 */
+    int32_t packPower_W;              /*!< 电池包提供或吸收的功率，单位：W */
+    uint8_t invalidPackPower;         /*!< 功率是否有效的位掩码。0->有效, 1->无效 */
+    int32_t stringVoltage_mV[BS_NR_OF_STRINGS];     /*!< 每个串的电压，单位：mV */
+    uint8_t invalidStringVoltage[BS_NR_OF_STRINGS]; /*!< 电压是否有效的位掩码。0->有效, 1->无效 */
+    int32_t stringCurrent_mA[BS_NR_OF_STRINGS];     /*!< 每个串的电流，单位：mA */
+    uint8_t invalidStringCurrent[BS_NR_OF_STRINGS]; /*!< 电流是否有效的位掩码。0->有效, 1->无效 */
+    int32_t stringPower_W[BS_NR_OF_STRINGS];        /*!< 每个串的功率，单位：W */
+    uint8_t invalidStringPower[BS_NR_OF_STRINGS];   /*!< 功率是否有效的位掩码。0->有效, 1->无效 */
 } DATA_BLOCK_PACK_VALUES_s;
 
-/** data block struct of current measurement */
+/** 电流测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    int32_t current_mA[BS_NR_OF_STRINGS];         /*!< unit: mA */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    uint8_t newCurrent;                           /*!< 0: measurement valid, 1: measurement invalid */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< timestamp of previous measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of current measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    int32_t current_mA[BS_NR_OF_STRINGS];         /*!< 电流值，单位：mA */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    uint8_t newCurrent;                           /*!< 0: 测量有效, 1: 测量无效 */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_CURRENT_s;
 
-/** data block struct of current sensor temperature measurement */
+/** 电流传感器温度测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                        /*!< Data block header */
-    int32_t sensorTemperature_ddegC[BS_NR_OF_STRINGS]; /*!< unit: 0.1&deg;C */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS];      /*!< 0: measurement valid, 1: measurement invalid */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS];      /*!< previous timestamp of power measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];              /*!< timestamp of power measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                        /*!< 数据块头 */
+    int32_t sensorTemperature_ddegC[BS_NR_OF_STRINGS]; /*!< 传感器温度，单位：0.1 °C */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS];      /*!< 0: 测量有效, 1: 测量无效 */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS];      /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];              /*!< 当前测量的时间戳 */
 } DATA_BLOCK_CURRENT_SENSOR_TEMPERATURE_s;
 
-/** data block struct of current sensor power measurement */
+/** 电流传感器功率测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    int32_t power_W[BS_NR_OF_STRINGS];            /*!< unit: W */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    uint8_t newPower;                             /*!< counter that indicates a new power measurement */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of power measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of power measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    int32_t power_W[BS_NR_OF_STRINGS];            /*!< 功率值，单位：W */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    uint8_t newPower;                             /*!< 指示新功率测量的计数器 */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_POWER_s;
 
-/** data block struct of current counting */
+/** 电流计数(库仑计)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    int32_t currentCounter_As[BS_NR_OF_STRINGS];  /*!< unit: A.s */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of CC measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of CC measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    int32_t currentCounter_As[BS_NR_OF_STRINGS];  /*!< 电流计数值，单位：A.s (安秒) */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_CURRENT_COUNTER_s;
 
-/** data block struct of current sensor energy counting */
+/** 电流传感器能量计数数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    int32_t energyCounter_Wh[BS_NR_OF_STRINGS];   /*!< unit: Wh */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of EC measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of EC measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    int32_t energyCounter_Wh[BS_NR_OF_STRINGS];   /*!< 能量计数值，单位：Wh */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_ENERGY_COUNTER_s;
 
-/** data block struct of current sensor voltage U1 measurement */
+/** 电流传感器电压U1测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< unit: mV */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of high voltage measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of high voltage measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< 高压值，单位：mV */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_SYSTEM_VOLTAGE_1_s;
 
-/** data block struct of current sensor voltage U2 measurement */
+/** 电流传感器电压U2测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< unit: mV */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of high voltage measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of high voltage measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< 高压值，单位：mV */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_SYSTEM_VOLTAGE_2_s;
 
-/** data block struct of current sensor voltage U3 measurement */
+/** 电流传感器电压U3测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: measurement valid, 1: measurement invalid */
-    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< unit: mV */
-    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< previous timestamp of high voltage measurement */
-    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< timestamp of high voltage measurement */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    uint8_t invalidMeasurement[BS_NR_OF_STRINGS]; /*!< 0: 测量有效, 1: 测量无效 */
+    int32_t highVoltage_mV[BS_NR_OF_STRINGS];     /*!< 高压值，单位：mV */
+    uint32_t previousTimestamp[BS_NR_OF_STRINGS]; /*!< 上一次测量的时间戳 */
+    uint32_t timestamp[BS_NR_OF_STRINGS];         /*!< 当前测量的时间戳 */
 } DATA_BLOCK_SYSTEM_VOLTAGE_3_s;
 
-/** data structure declaration of DATA_BLOCK_BALANCING_CONTROL */
+/** 均衡控制数据结构体声明 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    bool enableBalancing;       /*!< Switch for enabling/disabling balancing  */
-    uint8_t threshold_mV;       /*!< balancing threshold in mV                */
-    uint8_t request;            /*!< balancing request per CAN                */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    bool enableBalancing;       /*!< 启用/禁用均衡的开关 */
+    uint8_t threshold_mV;       /*!< 均衡阈值，单位：mV */
+    uint8_t request;            /*!< 通过CAN请求均衡 */
     bool activateBalancing[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                          [BS_NR_OF_CELL_BLOCKS_PER_MODULE]; /*!< 0: no balancing, 1: balancing active     */
+                          [BS_NR_OF_CELL_BLOCKS_PER_MODULE]; /*!< 0: 未均衡, 1: 均衡激活 */
     uint32_t deltaCharge_mAs[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]
-                            [BS_NR_OF_CELL_BLOCKS_PER_MODULE]; /*!< Difference in Depth-of-Discharge in mAs  */
-    uint16_t nrBalancedCells[BS_NR_OF_STRINGS];
+                            [BS_NR_OF_CELL_BLOCKS_PER_MODULE]; /*!< 放电深度差值，单位：mAs */
+    uint16_t nrBalancedCells[BS_NR_OF_STRINGS];                /*!< 正在均衡的单体数量 */
 } DATA_BLOCK_BALANCING_CONTROL_s;
 
-/** data structure declaration of DATA_BLOCK_USER_IO_CONTROL */
+/** 用户IO控制数据结构体声明 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                            /*!< Data block header */
-    uint8_t state;                                         /*!< for future use */
-    uint32_t eepromReadAddressToUse;                       /*!< address to read from for  slave EEPROM */
-    uint32_t eepromReadAddressLastUsed;                    /*!< last address used to read from slave EEPROM */
-    uint32_t eepromWriteAddressToUse;                      /*!< address to write to for slave EEPROM */
-    uint32_t eepromWriteAddressLastUsed;                   /*!< last address used to write to for slave EEPROM */
-    uint8_t ioValueOut[BS_NR_OF_MODULES_PER_STRING];       /*!< data to be written to the port expander */
-    uint8_t ioValueIn[BS_NR_OF_MODULES_PER_STRING];        /*!< data read from to the port expander */
-    uint8_t eepromValueWrite[BS_NR_OF_MODULES_PER_STRING]; /*!< data to be written to the slave EEPROM */
-    uint8_t eepromValueRead[BS_NR_OF_MODULES_PER_STRING];  /*!< data read from to the slave EEPROM */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                            /*!< 数据块头 */
+    uint8_t state;                                         /*!< 保留供将来使用 */
+    uint32_t eepromReadAddressToUse;                       /*!< 要读取的从控EEPROM地址 */
+    uint32_t eepromReadAddressLastUsed;                    /*!< 上次使用的从控EEPROM读取地址 */
+    uint32_t eepromWriteAddressToUse;                      /*!< 要写入的从控EEPROM地址 */
+    uint32_t eepromWriteAddressLastUsed;                   /*!< 上次使用的从控EEPROM写入地址 */
+    uint8_t ioValueOut[BS_NR_OF_MODULES_PER_STRING];       /*!< 要写入端口扩展器的数据 */
+    uint8_t ioValueIn[BS_NR_OF_MODULES_PER_STRING];        /*!< 从端口扩展器读取的数据 */
+    uint8_t eepromValueWrite[BS_NR_OF_MODULES_PER_STRING]; /*!< 要写入从控EEPROM的数据 */
+    uint8_t eepromValueRead[BS_NR_OF_MODULES_PER_STRING];  /*!< 从从控EEPROM读取的数据 */
     uint8_t
-        externalTemperatureSensor[BS_NR_OF_MODULES_PER_STRING]; /*!< temperature from the external sensor on slave */
+        externalTemperatureSensor[BS_NR_OF_MODULES_PER_STRING]; /*!< 从控上外部传感器读取的温度 */
 } DATA_BLOCK_SLAVE_CONTROL_s;
 
-/** data block struct of cell balancing feedback */
+/** 单体均衡反馈数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                                    /*!< Data block header */
-    uint8_t state;                                                 /*!< for future use */
-    uint16_t value[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< unit: mV (optocoupler output) */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                                    /*!< 数据块头 */
+    uint8_t state;                                                 /*!< 保留供将来使用 */
+    uint16_t value[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< 值，单位：mV (光耦输出) */
 } DATA_BLOCK_BALANCING_FEEDBACK_s;
 
-/** data block struct of cell open wire */
+/** 单体开路检测数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;             /*!< Data block header */
-    uint8_t state;                          /*!< for future use */
-    uint16_t nrOpenWires[BS_NR_OF_STRINGS]; /*!< number of open wires */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;             /*!< 数据块头 */
+    uint8_t state;                          /*!< 保留供将来使用 */
+    uint16_t nrOpenWires[BS_NR_OF_STRINGS]; /*!< 开路数量 */
     uint8_t openWire[BS_NR_OF_STRINGS]
                     [BS_NR_OF_MODULES_PER_STRING *
-                     (BS_NR_OF_CELL_BLOCKS_PER_MODULE + 1u)]; /*!< 1 -> open wire, 0 -> everything ok */
+                     (BS_NR_OF_CELL_BLOCKS_PER_MODULE + 1u)]; /*!< 1 -> 开路, 0 -> 正常 */
 } DATA_BLOCK_OPEN_WIRE_s;
 
-/** data block struct of GPIO voltage */
+/** GPIO电压数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    uint8_t state;              /*!< for future use */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    uint8_t state;              /*!< 保留供将来使用 */
     int16_t gpioVoltages_mV[BS_NR_OF_STRINGS]
-                           [BS_NR_OF_MODULES_PER_STRING * SLV_NR_OF_GPIOS_PER_MODULE];                 /*!< unit: mV */
-    int16_t gpaVoltages_mV[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING * SLV_NR_OF_GPAS_PER_MODULE]; /*!< unit: mV */
-    uint16_t invalidGpioVoltages[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< bitmask if voltages are valid.
-                                                                                    0->valid, 1->invalid */
+                           [BS_NR_OF_MODULES_PER_STRING * SLV_NR_OF_GPIOS_PER_MODULE];                 /*!< GPIO电压，单位：mV */
+    int16_t gpaVoltages_mV[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING * SLV_NR_OF_GPAS_PER_MODULE]; /*!< GPA电压，单位：mV */
+    uint16_t invalidGpioVoltages[BS_NR_OF_STRINGS][BS_NR_OF_MODULES_PER_STRING]; /*!< 电压是否有效的位掩码。
+                                                                                    0->有效, 1->无效 */
 } DATA_BLOCK_ALL_GPIO_VOLTAGES_s;
 
-/** data block struct of error flags */
+/** 错误标志数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                                          /*!< Data block header */
-    bool afeCommunicationCrcError[BS_NR_OF_STRINGS];                     /*!< false -> no error, true -> error */
-    bool afeSlaveMultiplexerError[BS_NR_OF_STRINGS];                     /*!< false -> no error, true -> error */
-    bool afeCommunicationSpiError[BS_NR_OF_STRINGS];                     /*!< false -> no error, true -> error */
-    bool afeConfigurationError[BS_NR_OF_STRINGS];                        /*!< false -> no error, true -> error */
-    bool afeCellVoltageInvalidError[BS_NR_OF_STRINGS];                   /*!< false -> no error, true -> error */
-    bool afeCellTemperatureInvalidError[BS_NR_OF_STRINGS];               /*!< false -> no error, true -> error */
-    bool baseCellVoltageMeasurementTimeoutError;                         /*!< false -> no error, true -> error */
-    bool redundancy0CellVoltageMeasurementTimeoutError;                  /*!< false -> no error, true -> error */
-    bool baseCellTemperatureMeasurementTimeoutError;                     /*!< false -> no error, true -> error */
-    bool redundancy0CellTemperatureMeasurementTimeoutError;              /*!< false -> no error, true -> error */
-    bool currentMeasurementTimeoutError[BS_NR_OF_STRINGS];               /*!< false -> no error, true -> error */
-    bool currentMeasurementInvalidError[BS_NR_OF_STRINGS];               /*!< false -> no error, true -> error */
-    bool currentSensorVoltage1TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> no error, true -> error */
-    bool currentSensorVoltage2TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> no error, true -> error */
-    bool currentSensorVoltage3TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> no error, true -> error */
-    bool currentSensorPowerTimeoutError[BS_NR_OF_STRINGS];               /*!< false -> no error, true -> error */
-    bool currentSensorCoulombCounterTimeoutError[BS_NR_OF_STRINGS];      /*!< false -> no error, true -> error */
-    bool currentSensorEnergyCounterTimeoutError[BS_NR_OF_STRINGS];       /*!< false -> no error, true -> error */
-    bool powerMeasurementInvalidError[BS_NR_OF_STRINGS];                 /*!< false -> no error, true -> error */
-    bool mainFuseError;                                                  /*!< false -> fuse ok,  true -> fuse tripped */
-    bool stringFuseError[BS_NR_OF_STRINGS];                              /*!< false -> fuse ok,  true -> fuse tripped */
-    bool openWireDetectedError[BS_NR_OF_STRINGS];                        /*!< false -> no error, true -> error */
-    bool stateRequestTimingViolationError;                               /*!< false -> no error, true -> error */
-    bool canRxQueueFullError;                                            /*!< false -> no error, true -> error */
-    bool canTxQueueFullError;                                            /*!< false -> no error, true -> error */
-    bool coinCellLowVoltageError;                                        /*!< false -> no error, true -> error */
-    bool plausibilityCheckPackVoltageError[BS_NR_OF_STRINGS];            /*!< false -> no error, true -> error */
-    bool plausibilityCheckCellVoltageError[BS_NR_OF_STRINGS];            /*!< false -> no error, true -> error */
-    bool plausibilityCheckCellVoltageSpreadError[BS_NR_OF_STRINGS];      /*!< false -> no error, true -> error */
-    bool plausibilityCheckCellTemperatureError[BS_NR_OF_STRINGS];        /*!< false -> no error, true -> error */
-    bool plausibilityCheckCellTemperatureSpreadError[BS_NR_OF_STRINGS];  /*!< false -> no error, true -> error */
-    bool currentSensorNotRespondingError[BS_NR_OF_STRINGS];              /*!< false -> no error, true -> error */
-    bool contactorInNegativePathOfStringFeedbackError[BS_NR_OF_STRINGS]; /*!< false -> no error, true -> error */
-    bool contactorInPositivePathOfStringFeedbackError[BS_NR_OF_STRINGS]; /*!< false -> no error, true -> error */
-    bool prechargeContactorFeedbackError[BS_NR_OF_STRINGS];              /*!< false -> no error, true -> error */
-    bool interlockOpenedError;                                           /*!< false -> no error, true -> error */
-    bool insulationMeasurementInvalidError;                              /*!< false -> no error, true -> error */
-    bool criticalLowInsulationResistanceError; /*!< false -> no critical resistance , true -> critical low resistance */
-    bool warnableLowInsulationResistanceError; /*!< false -> no warnable resistance, true -> warnable low resistance */
-    bool insulationGroundFaultDetectedError; /*!< false -> no insulation fault between HV and chassis detected, true ->
-                                                insulation fault detected */
-    bool prechargeAbortedDueToVoltage[BS_NR_OF_STRINGS];     /*!< false -> no error, true -> error */
-    bool prechargeAbortedDueToCurrent[BS_NR_OF_STRINGS];     /*!< false -> no error, true -> error */
-    bool deepDischargeDetectedError[BS_NR_OF_STRINGS];       /*!< false -> no error, true -> error */
-    bool currentOnOpenStringDetectedError[BS_NR_OF_STRINGS]; /*!< false -> no error, true -> error */
-    bool mcuDieTemperatureViolationError;                    /*!< false -> no error, true -> error */
-    bool mcuSbcFinError;                    /*!< false -> no error, true -> error: short-circuit to RSTB */
-    bool mcuSbcRstbError;                   /*!< false -> no error, true -> error: RSTB not working */
-    bool pexI2cCommunicationError;          /*!< the I2C port expander does not work as expected */
-    bool i2cRtcError;                       /*!< problem in I2C communication with RTC */
-    bool framReadCrcError;                  /*!< false if read CRC matches with CRC of read data, true otherwise */
-    bool rtcClockIntegrityError;            /*!< RTC time integrity not guaranteed, because oscillator has stopped */
-    bool rtcBatteryLowError;                /*!< RTC battery voltage is low */
-    bool taskEngineTimingViolationError;    /*!< timing violation in engine task */
-    bool task1msTimingViolationError;       /*!< timing violation in 1ms task */
-    bool task10msTimingViolationError;      /*!< timing violation in 10ms task */
-    bool task100msTimingViolationError;     /*!< timing violation in 100ms task */
-    bool task100msAlgoTimingViolationError; /*!< timing violation in 100ms algorithm task */
-    bool alertFlagSetError;                 /*!< true: ALERT situation detected, false: everything okay */
-    bool aerosolAlert;                      /*!< true: high aerosol concentration detected */
-    bool supplyVoltageClamp30cError;        /*!< false -> Supply voltage clamp 30C detected, true: no voltage on 30C */
-    bool afeAlarmLineError;                 /*!< true: alarm line error detected */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                                          /*!< 数据块头 */
+    bool afeCommunicationCrcError[BS_NR_OF_STRINGS];                     /*!< false -> 无错误, true -> AFE通信CRC错误 */
+    bool afeSlaveMultiplexerError[BS_NR_OF_STRINGS];                     /*!< false -> 无错误, true -> AFE从控多路复用器错误 */
+    bool afeCommunicationSpiError[BS_NR_OF_STRINGS];                     /*!< false -> 无错误, true -> AFE通信SPI错误 */
+    bool afeConfigurationError[BS_NR_OF_STRINGS];                        /*!< false -> 无错误, true -> AFE配置错误 */
+    bool afeCellVoltageInvalidError[BS_NR_OF_STRINGS];                   /*!< false -> 无错误, true -> AFE单体电压无效错误 */
+    bool afeCellTemperatureInvalidError[BS_NR_OF_STRINGS];               /*!< false -> 无错误, true -> AFE单体温度无效错误 */
+    bool baseCellVoltageMeasurementTimeoutError;                         /*!< false -> 无错误, true -> 基准单体电压测量超时错误 */
+    bool redundancy0CellVoltageMeasurementTimeoutError;                  /*!< false -> 无错误, true -> 冗余0单体电压测量超时错误 */
+    bool baseCellTemperatureMeasurementTimeoutError;                     /*!< false -> 无错误, true -> 基准单体温度测量超时错误 */
+    bool redundancy0CellTemperatureMeasurementTimeoutError;              /*!< false -> 无错误, true -> 冗余0单体温度测量超时错误 */
+    bool currentMeasurementTimeoutError[BS_NR_OF_STRINGS];               /*!< false -> 无错误, true -> 电流测量超时错误 */
+    bool currentMeasurementInvalidError[BS_NR_OF_STRINGS];               /*!< false -> 无错误, true -> 电流测量无效错误 */
+    bool currentSensorVoltage1TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> 无错误, true -> 电流传感器电压1超时错误 */
+    bool currentSensorVoltage2TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> 无错误, true -> 电流传感器电压2超时错误 */
+    bool currentSensorVoltage3TimeoutError[BS_NR_OF_STRINGS];            /*!< false -> 无错误, true -> 电流传感器电压3超时错误 */
+    bool currentSensorPowerTimeoutError[BS_NR_OF_STRINGS];               /*!< false -> 无错误, true -> 电流传感器功率超时错误 */
+    bool currentSensorCoulombCounterTimeoutError[BS_NR_OF_STRINGS];      /*!< false -> 无错误, true -> 电流传感器库仑计超时错误 */
+    bool currentSensorEnergyCounterTimeoutError[BS_NR_OF_STRINGS];       /*!< false -> 无错误, true -> 电流传感器能量计超时错误 */
+    bool powerMeasurementInvalidError[BS_NR_OF_STRINGS];                 /*!< false -> 无错误, true -> 功率测量无效错误 */
+    bool mainFuseError;                                                  /*!< false -> 熔断器正常,  true -> 主熔断器熔断 */
+    bool stringFuseError[BS_NR_OF_STRINGS];                              /*!< false -> 熔断器正常,  true -> 串熔断器熔断 */
+    bool openWireDetectedError[BS_NR_OF_STRINGS];                        /*!< false -> 无错误, true -> 检测到开路错误 */
+    bool stateRequestTimingViolationError;                               /*!< false -> 无错误, true -> 状态请求时序违规错误 */
+    bool canRxQueueFullError;                                            /*!< false -> 无错误, true -> CAN接收队列满错误 */
+    bool canTxQueueFullError;                                            /*!< false -> 无错误, true -> CAN发送队列满错误 */
+    bool coinCellLowVoltageError;                                        /*!< false -> 无错误, true -> 纽扣电池电压低错误 */
+    bool plausibilityCheckPackVoltageError[BS_NR_OF_STRINGS];            /*!< false -> 无错误, true -> 电池包电压合理性检查错误 */
+    bool plausibilityCheckCellVoltageError[BS_NR_OF_STRINGS];            /*!< false -> 无错误, true -> 单体电压合理性检查错误 */
+    bool plausibilityCheckCellVoltageSpreadError[BS_NR_OF_STRINGS];      /*!< false -> 无错误, true -> 单体电压压差合理性检查错误 */
+    bool plausibilityCheckCellTemperatureError[BS_NR_OF_STRINGS];        /*!< false -> 无错误, true -> 单体温度合理性检查错误 */
+    bool plausibilityCheckCellTemperatureSpreadError[BS_NR_OF_STRINGS];  /*!< false -> 无错误, true -> 单体温差合理性检查错误 */
+    bool currentSensorNotRespondingError[BS_NR_OF_STRINGS];              /*!< false -> 无错误, true -> 电流传感器无响应错误 */
+    bool contactorInNegativePathOfStringFeedbackError[BS_NR_OF_STRINGS]; /*!< false -> 无错误, true -> 串负极接触器反馈错误 */
+    bool contactorInPositivePathOfStringFeedbackError[BS_NR_OF_STRINGS]; /*!< false -> 无错误, true -> 串正极接触器反馈错误 */
+    bool prechargeContactorFeedbackError[BS_NR_OF_STRINGS];              /*!< false -> 无错误, true -> 预充接触器反馈错误 */
+    bool interlockOpenedError;                                           /*!< false -> 无错误, true -> 互锁断开错误 */
+    bool insulationMeasurementInvalidError;                              /*!< false -> 无错误, true -> 绝缘测量无效错误 */
+    bool criticalLowInsulationResistanceError;                           /*!< false -> 无临界电阻, true -> 临界低绝缘电阻 */
+    bool warnableLowInsulationResistanceError;                           /*!< false -> 无警告电阻, true -> 警告级低绝缘电阻 */
+    bool insulationGroundFaultDetectedError;                             /*!< false -> 未检测到HV与底盘间绝缘故障, true -> 检测到绝缘故障 */
+    bool prechargeAbortedDueToVoltage[BS_NR_OF_STRINGS];                 /*!< false -> 无错误, true -> 因电压中止预充 */
+    bool prechargeAbortedDueToCurrent[BS_NR_OF_STRINGS];                 /*!< false -> 无错误, true -> 因电流中止预充 */
+    bool deepDischargeDetectedError[BS_NR_OF_STRINGS];                   /*!< false -> 无错误, true -> 检测到深度放电错误 */
+    bool currentOnOpenStringDetectedError[BS_NR_OF_STRINGS];             /*!< false -> 无错误, true -> 断开串上检测到电流错误 */
+    bool mcuDieTemperatureViolationError;                                /*!< false -> 无错误, true -> MCU芯片温度违规错误 */
+    bool mcuSbcFinError;                                                 /*!< false -> 无错误, true -> 错误: 对RSTB短路 */
+    bool mcuSbcRstbError;                                                /*!< false -> 无错误, true -> 错误: RSTB不工作 */
+    bool pexI2cCommunicationError;                                       /*!< I2C端口扩展器未按预期工作 */
+    bool i2cRtcError;                                                    /*!< 与RTC的I2C通信出现问题 */
+    bool framReadCrcError;                                               /*!< 读取的CRC与读取数据的CRC不匹配时为true，否则为false */
+    bool rtcClockIntegrityError;                                         /*!< RTC时间完整性无法保证，因为振荡器已停止 */
+    bool rtcBatteryLowError;                                             /*!< RTC电池电压低 */
+    bool taskEngineTimingViolationError;                                 /*!< 引擎任务中的时序违规 */
+    bool task1msTimingViolationError;                                    /*!< 1ms任务中的时序违规 */
+    bool task10msTimingViolationError;                                   /*!< 10ms任务中的时序违规 */
+    bool task100msTimingViolationError;                                  /*!< 100ms任务中的时序违规 */
+    bool task100msAlgoTimingViolationError;                              /*!< 100ms算法任务中的时序违规 */
+    bool alertFlagSetError;                                              /*!< true: 检测到ALERT状况, false: 一切正常 */
+    bool aerosolAlert;                                                   /*!< true: 检测到高浓度气溶胶 */
+    bool supplyVoltageClamp30cError;                                     /*!< false -> 检测到30C供电电压, true: 30C无电压 */
+    bool afeAlarmLineError;                                              /*!< true: 检测到报警线错误 */
 } DATA_BLOCK_ERROR_STATE_s;
 
-/** data block struct of contactor feedback */
+/** 接触器反馈数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    uint32_t contactorFeedback; /*!< feedback of all contactors, without interlock */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    uint32_t contactorFeedback; /*!< 所有接触器的反馈，不包括互锁 */
 } DATA_BLOCK_CONTACTOR_FEEDBACK_s;
 
-/** data block struct of interlock feedback */
+/** 互锁反馈数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                   /*!< Data block header */
-    uint8_t interlockFeedback_IL_STATE;           /*!< feedback of interlock, connected to pin */
-    float_t interlockVoltageFeedback_IL_HS_VS_mV; /*!< voltage feedback of interlock, connected to ADC input 2 */
-    float_t interlockVoltageFeedback_IL_LS_VS_mV; /*!< voltage feedback of interlock, connected to ADC input 3 */
-    float_t interlockCurrentFeedback_IL_HS_CS_mA; /*!< current feedback of interlock, connected to ADC input 4 */
-    float_t interlockCurrentFeedback_IL_LS_CS_mA; /*!< current feedback of interlock, connected to ADC input 5 */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                   /*!< 数据块头 */
+    uint8_t interlockFeedback_IL_STATE;           /*!< 互锁反馈，连接到引脚 */
+    float_t interlockVoltageFeedback_IL_HS_VS_mV; /*!< 互锁电压反馈，连接到ADC输入2 */
+    float_t interlockVoltageFeedback_IL_LS_VS_mV; /*!< 互锁电压反馈，连接到ADC输入3 */
+    float_t interlockCurrentFeedback_IL_HS_CS_mA; /*!< 互锁电流反馈，连接到ADC输入4 */
+    float_t interlockCurrentFeedback_IL_LS_CS_mA; /*!< 互锁电流反馈，连接到ADC输入5 */
 } DATA_BLOCK_INTERLOCK_FEEDBACK_s;
 
-/** data block struct of sof limits */
+/** SOF(功能状态)限制数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                        /*!< Data block header */
-    float_t recommendedContinuousPackChargeCurrent_mA; /*!< recommended continuous operating pack charge current */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                        /*!< 数据块头 */
+    float_t recommendedContinuousPackChargeCurrent_mA; /*!< 推荐的连续电池包充电电流 */
     float_t
-        recommendedContinuousPackDischargeCurrent_mA; /*!< recommended continuous operating pack discharge current */
-    float_t recommendedPeakPackChargeCurrent_mA;      /*!< recommended peak operating pack charge current */
-    float_t recommendedPeakPackDischargeCurrent_mA;   /*!< recommended peak operating pack discharge current */
+        recommendedContinuousPackDischargeCurrent_mA; /*!< 推荐的连续电池包放电电流 */
+    float_t recommendedPeakPackChargeCurrent_mA;      /*!< 推荐的峰值电池包充电电流 */
+    float_t recommendedPeakPackDischargeCurrent_mA;   /*!< 推荐的峰值电池包放电电流 */
     float_t
-        recommendedContinuousChargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< recommended continuous operating charge current */
-    float_t recommendedContinuousDischargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< recommended continuous operating discharge
-                                                                           current */
-    float_t recommendedPeakChargeCurrent_mA[BS_NR_OF_STRINGS];    /*!< recommended peak operating charge current */
-    float_t recommendedPeakDischargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< recommended peak operating discharge current */
+        recommendedContinuousChargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< 推荐的连续充电电流 */
+    float_t recommendedContinuousDischargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< 推荐的连续放电电流 */
+    float_t recommendedPeakChargeCurrent_mA[BS_NR_OF_STRINGS];    /*!< 推荐的峰值充电电流 */
+    float_t recommendedPeakDischargeCurrent_mA[BS_NR_OF_STRINGS]; /*!< 推荐的峰值放电电流 */
 } DATA_BLOCK_SOF_s;
 
-/** data block struct of system state */
+/** 系统状态数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    int32_t bmsCanState;        /*!< system state for CAN messages (e.g., standby, normal) */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    int32_t bmsCanState;        /*!< 用于CAN消息的系统状态 (如待机、正常) */
 } DATA_BLOCK_SYSTEM_STATE_s;
 
-/** data block struct of the maximum safe limits */
+/** 最大安全限制(MSL)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                           /*!< Data block header */
-    uint8_t packChargeOvercurrent;                        /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t packDischargeOvercurrent;                     /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
-    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> MSL NOT violated, 1 -> MSL violated */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                           /*!< 数据块头 */
+    uint8_t packChargeOvercurrent;                        /*!< 0 -> 未违反MSL, 1 -> 违反MSL(包充电过流) */
+    uint8_t packDischargeOvercurrent;                     /*!< 0 -> 未违反MSL, 1 -> 违反MSL(包放电过流) */
+    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> 未违反MSL, 1 -> 违反MSL(过压) */
+    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> 未违反MSL, 1 -> 违反MSL(欠压) */
+    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反MSL, 1 -> 违反MSL(充电高温) */
+    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反MSL, 1 -> 违反MSL(放电高温) */
+    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> 未违反MSL, 1 -> 违反MSL(充电低温) */
+    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> 未违反MSL, 1 -> 违反MSL(放电低温) */
+    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反MSL, 1 -> 违反MSL(单体充电过流) */
+    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> 未违反MSL, 1 -> 违反MSL(串充电过流) */
+    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反MSL, 1 -> 违反MSL(单体放电过流) */
+    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> 未违反MSL, 1 -> 违反MSL(串放电过流) */
+    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> 未违反MSL, 1 -> 违反MSL(PCB高温) */
+    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> 未违反MSL, 1 -> 违反MSL(PCB低温) */
 } DATA_BLOCK_MSL_FLAG_s;
 
-/** data block struct of the recommended safety limit */
+/** 推荐安全限制(RSL)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                           /*!< Data block header */
-    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
-    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> RSL NOT violated, 1 -> RSL violated */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                           /*!< 数据块头 */
+    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> 未违反RSL, 1 -> 违反RSL(过压) */
+    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> 未违反RSL, 1 -> 违反RSL(欠压) */
+    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反RSL, 1 -> 违反RSL(充电高温) */
+    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反RSL, 1 -> 违反RSL(放电高温) */
+    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> 未违反RSL, 1 -> 违反RSL(充电低温) */
+    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> 未违反RSL, 1 -> 违反RSL(放电低温) */
+    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反RSL, 1 -> 违反RSL(单体充电过流) */
+    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> 未违反RSL, 1 -> 违反RSL(串充电过流) */
+    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反RSL, 1 -> 违反RSL(单体放电过流) */
+    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> 未违反RSL, 1 -> 违反RSL(串放电过流) */
+    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> 未违反RSL, 1 -> 违反RSL(PCB高温) */
+    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> 未违反RSL, 1 -> 违反RSL(PCB低温) */
 } DATA_BLOCK_RSL_FLAG_s;
 
-/** data block struct of the maximum operating limit */
+/** 最大运行限制(MOL)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                           /*!< Data block header */
-    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
-    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> MOL NOT violated, 1 -> MOL violated */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                           /*!< 数据块头 */
+    uint8_t overVoltage[BS_NR_OF_STRINGS];                /*!< 0 -> 未违反MOL, 1 -> 违反MOL(过压) */
+    uint8_t underVoltage[BS_NR_OF_STRINGS];               /*!< 0 -> 未违反MOL, 1 -> 违反MOL(欠压) */
+    uint8_t overtemperatureCharge[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反MOL, 1 -> 违反MOL(充电高温) */
+    uint8_t overtemperatureDischarge[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反MOL, 1 -> 违反MOL(放电高温) */
+    uint8_t undertemperatureCharge[BS_NR_OF_STRINGS];     /*!< 0 -> 未违反MOL, 1 -> 违反MOL(充电低温) */
+    uint8_t undertemperatureDischarge[BS_NR_OF_STRINGS];  /*!< 0 -> 未违反MOL, 1 -> 违反MOL(放电低温) */
+    uint8_t cellChargeOvercurrent[BS_NR_OF_STRINGS];      /*!< 0 -> 未违反MOL, 1 -> 违反MOL(单体充电过流) */
+    uint8_t stringChargeOvercurrent[BS_NR_OF_STRINGS];    /*!< 0 -> 未违反MOL, 1 -> 违反MOL(串充电过流) */
+    uint8_t cellDischargeOvercurrent[BS_NR_OF_STRINGS];   /*!< 0 -> 未违反MOL, 1 -> 违反MOL(单体放电过流) */
+    uint8_t stringDischargeOvercurrent[BS_NR_OF_STRINGS]; /*!< 0 -> 未违反MOL, 1 -> 违反MOL(串放电过流) */
+    uint8_t pcbOvertemperature[BS_NR_OF_STRINGS];         /*!< 0 -> 未违反MOL, 1 -> 违反MOL(PCB高温) */
+    uint8_t pcbUndertemperature[BS_NR_OF_STRINGS];        /*!< 0 -> 未违反MOL, 1 -> 违反MOL(PCB低温) */
 } DATA_BLOCK_MOL_FLAG_s;
 
-/** data block struct of SOC */
+/** SOC(荷电状态)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                       /*!< Data block header */
-    float_t averageSoc_perc[BS_NR_OF_STRINGS];        /*!< 0.0 <= averageSoc <= 100.0 */
-    float_t minimumSoc_perc[BS_NR_OF_STRINGS];        /*!< 0.0 <= minSoc <= 100.0 */
-    float_t maximumSoc_perc[BS_NR_OF_STRINGS];        /*!< 0.0 <= maxSoc <= 100.0 */
-    float_t chargeThroughput_As[BS_NR_OF_STRINGS];    /*Summation of all charges */
-    float_t dischargeThroughput_As[BS_NR_OF_STRINGS]; /*Summation of all discharges */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                       /*!< 数据块头 */
+    float_t averageSoc_perc[BS_NR_OF_STRINGS];        /*!< 平均SOC: 0.0 <= averageSoc <= 100.0 */
+    float_t minimumSoc_perc[BS_NR_OF_STRINGS];        /*!< 最小SOC: 0.0 <= minSoc <= 100.0 */
+    float_t maximumSoc_perc[BS_NR_OF_STRINGS];        /*!< 最大SOC: 0.0 <= maxSoc <= 100.0 */
+    float_t chargeThroughput_As[BS_NR_OF_STRINGS];    /*!< 总充电吞吐量 */
+    float_t dischargeThroughput_As[BS_NR_OF_STRINGS]; /*!< 总放电吞吐量 */
 } DATA_BLOCK_SOC_s;
 
-/** data block struct of SOH */
+/** SOH(健康状态)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                /*!< Data block header */
-    float_t averageSoh_perc[BS_NR_OF_STRINGS]; /*!< 0.0 <= averageSoh <= 100.0 */
-    float_t minimumSoh_perc[BS_NR_OF_STRINGS]; /*!< 0.0 <= minimumSoh <= 100.0  */
-    float_t maximumSoh_perc[BS_NR_OF_STRINGS]; /*!< 0.0 <= maximumSoh <= 100.0  */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                /*!< 数据块头 */
+    float_t averageSoh_perc[BS_NR_OF_STRINGS]; /*!< 平均SOH: 0.0 <= averageSoh <= 100.0 */
+    float_t minimumSoh_perc[BS_NR_OF_STRINGS]; /*!< 最小SOH: 0.0 <= minimumSoh <= 100.0  */
+    float_t maximumSoh_perc[BS_NR_OF_STRINGS]; /*!< 最大SOH: 0.0 <= maximumSoh <= 100.0  */
 } DATA_BLOCK_SOH_s;
 
-/** data block struct of SOE */
+/** SOE(能量状态)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                             /*!< Data block header */
-    float_t averageSoe_perc[BS_NR_OF_STRINGS];              /*!< 0.0 <= averageSoe <= 100.0 */
-    float_t minimumSoe_perc[BS_NR_OF_STRINGS];              /*!< 0.0 <= minimumSoe <= 100.0  */
-    float_t maximumSoe_perc[BS_NR_OF_STRINGS];              /*!< 0.0 <= maximumSoe <= 100.0  */
-    uint32_t maximumSoe_Wh[BS_NR_OF_STRINGS];               /*!< maximum string energy in Wh */
-    uint32_t averageSoe_Wh[BS_NR_OF_STRINGS];               /*!< average string energy in Wh */
-    uint32_t minimumSoe_Wh[BS_NR_OF_STRINGS];               /*!< minimum string energy in Wh */
-    float_t chargeEnergyThroughput_Wh[BS_NR_OF_STRINGS];    /*!< inflow of energy */
-    float_t dischargeEnergyThroughput_Wh[BS_NR_OF_STRINGS]; /*!< outflow of energy */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                             /*!< 数据块头 */
+    float_t averageSoe_perc[BS_NR_OF_STRINGS];              /*!< 平均SOE: 0.0 <= averageSoe <= 100.0 */
+    float_t minimumSoe_perc[BS_NR_OF_STRINGS];              /*!< 最小SOE: 0.0 <= minimumSoe <= 100.0  */
+    float_t maximumSoe_perc[BS_NR_OF_STRINGS];              /*!< 最大SOE: 0.0 <= maximumSoe <= 100.0  */
+    uint32_t maximumSoe_Wh[BS_NR_OF_STRINGS];               /*!< 最大串能量，单位：Wh */
+    uint32_t averageSoe_Wh[BS_NR_OF_STRINGS];               /*!< 平均串能量，单位：Wh */
+    uint32_t minimumSoe_Wh[BS_NR_OF_STRINGS];               /*!< 最小串能量，单位：Wh */
+    float_t chargeEnergyThroughput_Wh[BS_NR_OF_STRINGS];    /*!< 充入能量 */
+    float_t dischargeEnergyThroughput_Wh[BS_NR_OF_STRINGS]; /*!< 放出能量 */
 } DATA_BLOCK_SOE_s;
 
-/** data block struct of can state request */
+/** CAN状态请求数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;         /*!< Data block header */
-    uint8_t stateRequestViaCan;         /*!< state request */
-    uint8_t previousStateRequestViaCan; /*!< previous state request */
-    uint8_t stateRequestViaCanPending;  /*!< pending state request */
-    uint8_t stateCounter;               /*!< counts state updates */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;         /*!< 数据块头 */
+    uint8_t stateRequestViaCan;         /*!< 状态请求 */
+    uint8_t previousStateRequestViaCan; /*!< 上一次的状态请求 */
+    uint8_t stateRequestViaCanPending;  /*!< 待处理的状态请求 */
+    uint8_t stateCounter;               /*!< 状态更新计数 */
 } DATA_BLOCK_STATE_REQUEST_s;
 
-/** data block struct of the moving average algorithm */
+/** 滑动平均算法数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                          /*!< Data block header */
-    float_t movingAverageCurrent1sInterval_mA;           /*!< current moving average over the last 1s */
-    float_t movingAverageCurrent5sInterval_mA;           /*!< current moving average over the last 5s */
-    float_t movingAverageCurrent10sInterval_mA;          /*!< current moving average over the last 10s */
-    float_t movingAverageCurrent30sInterval_mA;          /*!< current moving average over the last 30s */
-    float_t movingAverageCurrent60sInterval_mA;          /*!< current moving average over the last 60s */
-    float_t movingAverageCurrentConfigurableInterval_mA; /*!< current moving average over the last configured time */
-    float_t movingAveragePower1sInterval_mA;             /*!< power moving average over the last 1s */
-    float_t movingAveragePower5sInterval_mA;             /*!< power moving average over the last 5s */
-    float_t movingAveragePower10sInterval_mA;            /*!< power moving average over the last 10s */
-    float_t movingAveragePower30sInterval_mA;            /*!< power moving average over the last 30s */
-    float_t movingAveragePower60sInterval_mA;            /*!< power moving average over the last 60s */
-    float_t movingAveragePowerConfigurableInterval_mA;   /*!< power moving average over the last configured time */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                          /*!< 数据块头 */
+    float_t movingAverageCurrent1sInterval_mA;           /*!< 过去1秒的电流滑动平均值 */
+    float_t movingAverageCurrent5sInterval_mA;           /*!< 过去5秒的电流滑动平均值 */
+    float_t movingAverageCurrent10sInterval_mA;          /*!< 过去10秒的电流滑动平均值 */
+    float_t movingAverageCurrent30sInterval_mA;          /*!< 过去30秒的电流滑动平均值 */
+    float_t movingAverageCurrent60sInterval_mA;          /*!< 过去60秒的电流滑动平均值 */
+    float_t movingAverageCurrentConfigurableInterval_mA; /*!< 过去配置时间的电流滑动平均值 */
+    float_t movingAveragePower1sInterval_mA;             /*!< 过去1秒的功率滑动平均值 */
+    float_t movingAveragePower5sInterval_mA;             /*!< 过去5秒的功率滑动平均值 */
+    float_t movingAveragePower10sInterval_mA;            /*!< 过去10秒的功率滑动平均值 */
+    float_t movingAveragePower30sInterval_mA;            /*!< 过去30秒的功率滑动平均值 */
+    float_t movingAveragePower60sInterval_mA;            /*!< 过去60秒的功率滑动平均值 */
+    float_t movingAveragePowerConfigurableInterval_mA;   /*!< 过去配置时间的功率滑动平均值 */
 } DATA_BLOCK_MOVING_AVERAGE_s;
 
-/** data block struct of insulation monitoring device measurement */
+/** 绝缘监测设备测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;         /*!< Data block header */
-    bool isImdRunning;                  /*!< true -> Insulation resistance measurement active, false -> not active */
-    bool isMeasurementValid;            /*!< true -> resistance value valid, false -> resistance unreliable */
-    uint32_t insulationResistance_kOhm; /*!< insulation resistance measured in kOhm */
-    bool areDeviceFlagsValid; /*!< true -> flags below this database entry valid, false -> flags unreliable e.g. if
-                                 device error detected */
-    bool dfIsCriticalResistanceDetected; /*!< device status flag: false -> resistance value okay, true -> resistance
-                                            value too low/error */
-    bool dfIsWarnableResistanceDetected; /*!< true: warning threshold violated, false: no warning active */
-    bool dfIsChassisFaultDetected;       /*!< true: short between HV potential and chassis detected, false: no error */
-    bool dfIsChassisShortToHvPlus;       /*!< true: bias/tendency to the location of the insulation fault to HV plus */
-    bool dfIsChassisShortToHvMinus;      /*!< true: bias/tendency to the location of the insulation fault to HV minus */
-    bool dfIsDeviceErrorDetected;        /*!< true: device error detected, false: no error detected */
-    bool dfIsMeasurementUpToDate;        /*!< true: measurement up to-date, false: outdated */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;         /*!< 数据块头 */
+    bool isImdRunning;                  /*!< true -> 绝缘电阻测量激活, false -> 未激活 */
+    bool isMeasurementValid;            /*!< true -> 电阻值有效, false -> 电阻值不可靠 */
+    uint32_t insulationResistance_kOhm; /*!< 测量的绝缘电阻，单位：kOhm */
+    bool areDeviceFlagsValid; /*!< true -> 此数据库条目下方的标志有效, false -> 标志不可靠(例如检测到设备错误) */
+    bool dfIsCriticalResistanceDetected; /*!< 设备状态标志: false -> 电阻值正常, true -> 电阻值过低/错误 */
+    bool dfIsWarnableResistanceDetected; /*!< true: 违反警告阈值, false: 无警告激活 */
+    bool dfIsChassisFaultDetected;       /*!< true: 检测到HV电位与底盘短路, false: 无错误 */
+    bool dfIsChassisShortToHvPlus;       /*!< true: 绝缘故障位置偏向HV正极 */
+    bool dfIsChassisShortToHvMinus;      /*!< true: 绝缘故障位置偏向HV负极 */
+    bool dfIsDeviceErrorDetected;        /*!< true: 检测到设备错误, false: 未检测到错误 */
+    bool dfIsMeasurementUpToDate;        /*!< true: 测量最新, false: 已过时 */
 } DATA_BLOCK_INSULATION_s;
 
-/** data block struct for the I2C humidity/temperature sensor */
+/** I2C温湿度传感器数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    int16_t temperature_ddegC;
-    uint8_t humidity_perc;
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    int16_t temperature_ddegC;  /*!< 温度，单位：0.1 °C */
+    uint8_t humidity_perc;      /*!< 湿度，单位：% */
 } DATA_BLOCK_HTSEN_s;
 
-/** data block struct of internal ADC voltage measurement */
+/** 内部ADC电压测量数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;                                 /*!< Data block header */
-    float_t adc1ConvertedVoltages_mV[MCU_ADC1_MAX_NR_CHANNELS]; /*!< voltages measured by the internal ADC ADC1 */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;                                 /*!< 数据块头 */
+    float_t adc1ConvertedVoltages_mV[MCU_ADC1_MAX_NR_CHANNELS]; /*!< 内部ADC ADC1测量的电压 */
 } DATA_BLOCK_ADC_VOLTAGE_s;
 
-/** data block struct for the database built-in self-test */
+/** 数据库内置自检数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    uint8_t member1;            /*!< first member of self-test struct */
-    uint8_t member2;            /*!< second member of self-test struct */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    uint8_t member1;            /*!< 自检结构体的第一个成员 */
+    uint8_t member2;            /*!< 自检结构体的第二个成员 */
 } DATA_BLOCK_DUMMY_FOR_SELF_TEST_s;
 
-/** data block struct for the BAS6C-X00 aerosol sensor */
+/** BAS6C-X00气溶胶传感器数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header;              /*!< Data block header */
-    uint8_t sensorStatus;                    /*!< 0: normal, 1: alarm, 2: reserved */
-    bool photoelectricError;                 /*!< true when sensor has photoelectric device fault */
-    bool supplyOvervoltageError;             /*!< true when voltage supply supplies over voltage */
-    bool supplyUndervoltageError;            /*!< true when voltage supply supplies under voltage */
-    uint16_t particulateMatterConcentration; /*!< particulate matter concentration in microgram/m^3 */
-    uint8_t crcCheckCode;                    /*!< */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header;              /*!< 数据块头 */
+    uint8_t sensorStatus;                    /*!< 0: 正常, 1: 报警, 2: 保留 */
+    bool photoelectricError;                 /*!< 传感器光电装置故障时为true */
+    bool supplyOvervoltageError;             /*!< 供电过压时为true */
+    bool supplyUndervoltageError;            /*!< 供电欠压时为true */
+    uint16_t particulateMatterConcentration; /*!< 颗粒物浓度，单位：微克/立方米 */
+    uint8_t crcCheckCode;                    /*!< CRC校验码 */
 } DATA_BLOCK_AEROSOL_SENSOR_s;
 
-/** data block struct for the BAS6C-X00 aerosol sensor */
+/** PHY(物理层)数据块结构体 */
 typedef struct {
-    /* This struct needs to be at the beginning of every database entry. During
-     * the initialization of a database struct, uniqueId must be set to the
-     * respective database entry representation in enum DATA_BLOCK_ID_e. */
-    DATA_BLOCK_HEADER_s header; /*!< Data block header */
-    bool initialized;           /*!< true when phy initialized */
-    bool aliveStatus;           /*!< true when phy is reachable */
-    bool linkStatus;            /*!< true when phy is connected to network */
+    /* 此结构体必须位于每个数据库条目的开头。在初始化数据库结构体时，
+       必须将uniqueId设置为枚举DATA_BLOCK_ID_e中相应的数据库条目表示。 */
+    DATA_BLOCK_HEADER_s header; /*!< 数据块头 */
+    bool initialized;           /*!< PHY初始化完成时为true */
+    bool aliveStatus;           /*!< PHY可达时为true */
+    bool linkStatus;            /*!< PHY连接到网络时为true */
 } DATA_BLOCK_PHY_s;
 
-/** array for the database */
+/** 数据库数组 */
 extern DATA_BASE_s data_database[DATA_BLOCK_ID_MAX];
 
-/*========== Extern Constant and Variable Declarations ======================*/
+/*========== 外部常量与变量声明 ==============================================*/
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 ===================================================*/
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
+/*========== 外部化的静态函数原型（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif
 

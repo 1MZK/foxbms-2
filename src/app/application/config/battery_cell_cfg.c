@@ -1,69 +1,29 @@
 /**
- *
- * @copyright &copy; 2010 - 2026, Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.
- * All rights reserved.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * We kindly request you to use one or more of the following phrases to refer to
- * foxBMS in your hardware, software, documentation or advertising materials:
- *
- * - "This product uses parts of foxBMS&reg;"
- * - "This product includes parts of foxBMS&reg;"
- * - "This product is derived from foxBMS&reg;"
- *
- */
-
-/**
- * @file    battery_cell_cfg.c
+ * @file    电池单体配置
  * @author  foxBMS Team
  * @date    2020-10-08 (date of creation)
  * @updated 2026-04-20 (date of last update)
  * @version v1.11.0
- * @ingroup BATTERY_CELL_CONFIGURATION
+ * @ingroup 电池单元配置
  * @prefix  BC
  *
- * @brief   Configuration of the battery cell
- * @details This files contains battery cell lookup tables
+ * @brief   电池单体配置
+ * @details 本文件包含电池单体的查找表（LUT）数据，如开路电压(OCV)与SOC/SOE的映射关系
  *
  */
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 #include "battery_cell_cfg.h"
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
-/*========== Static Constant and Variable Definitions =======================*/
+/*========== 静态常量与变量定义 ==============================================*/
 
-/*========== Extern Constant and Variable Definitions =======================*/
+/*========== 外部常量与变量定义 ==============================================*/
 
+/* SOC查找表：以1%为步长，从100%开始降序排列 (电压单位:mV, SOC单位:%) */
 const BC_LUT_s bc_stateOfChargeLookupTable[] = {
     {4123, 100.0f}, {4088, 99.0f}, {4072, 98.0f}, {4060, 97.0f}, {4052, 96.0f}, {4045, 95.0f}, {4040, 94.0f},
     {4036, 93.0f},  {4032, 92.0f}, {4028, 91.0f}, {4024, 90.0f}, {4020, 89.0f}, {4015, 88.0f}, {4009, 87.0f},
@@ -82,7 +42,7 @@ const BC_LUT_s bc_stateOfChargeLookupTable[] = {
     {2825, 2.0f},   {2716, 1.0f},
 };
 
-/* SOE Lookup table in 1% steps starting with 100% */
+/* SOE查找表：以1%为步长，从100%开始降序排列 (电压单位:mV, SOE单位:%) */
 const BC_LUT_s bc_stateOfEnergyLookupTable[] = {
     {4163, 100.0f}, {4145, 99.0f}, {4131, 98.0f}, {4121, 97.0f}, {4113, 96.0f}, {4106, 95.0f}, {4101, 94.0f},
     {4096, 93.0f},  {4092, 92.0f}, {4089, 91.0f}, {4085, 90.0f}, {4081, 89.0f}, {4077, 88.0f}, {4072, 87.0f},
@@ -101,15 +61,16 @@ const BC_LUT_s bc_stateOfEnergyLookupTable[] = {
     {2929, 2.0f},   {2572, 1.0f},
 };
 
+/* 计算查找表的长度（元素个数），供插值算法使用 */
 uint16_t bc_stateOfChargeLookupTableLength = sizeof(bc_stateOfChargeLookupTable) / sizeof(BC_LUT_s);
 uint16_t bc_stateOfEnergyLookupTableLength = sizeof(bc_stateOfEnergyLookupTable) / sizeof(BC_LUT_s);
 
-/*========== Static Function Prototypes =====================================*/
+/*========== 静态函数原型 ===================================================*/
 
-/*========== Static Function Implementations ================================*/
+/*========== 静态函数实现 ====================================================*/
 
-/*========== Extern Function Implementations ================================*/
+/*========== 外部函数实现 ====================================================*/
 
-/*========== Externalized Static Function Implementations (Unit Test) =======*/
+/*========== 外部化的静态函数实现（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif

@@ -48,12 +48,11 @@
  * @ingroup MAIN
  * @prefix  MAIN
  *
- * @brief   Main function
- * @details The main function implements a state machine to realize the
- *          workflow of the bootloader.
+ * @brief   主函数
+ * @details 主函数实现了一个状态机，用于完成引导加载程序(Bootloader)的工作流程。
  */
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 #include "main.h"
 
 #include "boot_cfg.h"
@@ -72,119 +71,118 @@
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏与定义 =======================================================*/
 
-/*========== Static Constant and Variable Definitions =======================*/
+/*========== 静态常量与变量定义 ==============================================*/
 
-/*========== Extern Constant and Variable Definitions =======================*/
+/*========== 外部常量与变量定义 ==============================================*/
 
-/*========== Static Function Prototypes =====================================*/
+/*========== 静态函数原型 ===================================================*/
 
-/*========== Static Function Implementations ================================*/
+/*========== 静态函数实现 ====================================================*/
 
-/*========== Extern Function Implementations ================================*/
+/*========== 外部函数实现 ====================================================*/
 #ifndef UNITY_UNIT_TEST
 int main(void)
 #else
-int unit_test_main(void)
+int unit_test_main(void) /*!< 单元测试时的主函数入口 */
 #endif
 {
-    /* Enable IRQ and FIQ Interrupt mode in CPSR register */
+    /* 在CPSR寄存器中使能IRQ和FIQ中断模式 */
     _enable_interrupt_();
 
-    /* Init some modules */
-    muxInit();
-    gioInit();
-    CAN_Initialize();
-    rtiInit();
+    /* 初始化部分模块 */
+    muxInit();              /*!< 初始化引脚复用 */
+    gioInit();              /*!< 初始化通用输入输出(GPIO) */
+    CAN_Initialize();       /*!< 初始化CAN通信 */
+    rtiInit();              /*!< 初始化实时中断定时器(RTI) */
 
-    /* Copy the flash relevant .text and .const to RAM */
+    /* 将Flash相关的 .text 和 .const 段拷贝到RAM中运行 */
     memcpy(&main_textRunStartFlashC, &main_textLoadStartFlashC, (uint32_t)&main_textSizeFlashC);
     memcpy(&main_constRunStartFlashCfgC, &main_constLoadStartFlashCfgC, (uint32_t)&main_constSizeFlashCfgC);
 
-    CAN_SendBootMessage();
+    CAN_SendBootMessage(); /*!< 通过CAN发送引导启动消息 */
 
-    /* Start rti timer */
-    RTI_ResetFreeRunningCount();
-    rtiStartCounter(rtiREG1, rtiCOUNTER_BLOCK0);
-    uint32_t startCounter   = RTI_GetFreeRunningCount();
-    bool finishedOneAutoRun = false;
+    /* 启动rti定时器 */
+    RTI_ResetFreeRunningCount();                          /*!< 重置自由运行计数器 */
+    rtiStartCounter(rtiREG1, rtiCOUNTER_BLOCK0);         /*!< 启动RTI计数器块0 */
+    uint32_t startCounter   = RTI_GetFreeRunningCount();  /*!< 获取起始计数值 */
+    bool finishedOneAutoRun = false;                      /*!< 标记是否已完成一次自动运行(超时跳转) */
 
     while (FOREVER()) {
-        /* Enable IRQ interrupt to ensure the incoming CAN message can be processed,
-        because the IRQ could be potentially disabled by any sub function that is
-        called in the following context. */
+        /* 使能IRQ中断以确保可以处理接收到的CAN消息，
+           因为在以下上下文中调用的子函数可能会潜在地禁用IRQ。 */
         _enable_IRQ_interrupt_();
 
-        /* Check if timeout happens */
+        /* 检查是否发生超时 */
         if ((finishedOneAutoRun == false) && (RTI_IsTimeElapsed(startCounter, MAIN_TIME_OUT_us) == true)) {
             if (boot_state == BOOT_FSM_STATE_WAIT) {
+                /* 如果超时且当前处于等待状态，则切换到运行状态以跳转至应用程序 */
                 boot_state = BOOT_FSM_STATE_RUN;
-                rtiStopCounter(rtiREG1, rtiCOUNTER_BLOCK0);
-                RTI_ResetFreeRunningCount();
-                finishedOneAutoRun = true;
+                rtiStopCounter(rtiREG1, rtiCOUNTER_BLOCK0); /*!< 停止RTI计数器 */
+                RTI_ResetFreeRunningCount();                /*!< 重置自由运行计数器 */
+                finishedOneAutoRun = true;                  /*!< 标记自动运行已完成，防止再次触发 */
             }
         }
 
         switch (boot_state) {
             case BOOT_FSM_STATE_WAIT:
-                /* Get the boot type based on can fsm state */
+                /* 根据CAN有限状态机状态获取启动类型 */
                 boot_state = BOOT_GetBootState();
                 break;
 
             case BOOT_FSM_STATE_LOAD:
-                /* Get the boot type during load, it can only be BOOT_FSM_STATE_ERROR,
-                BOOT_FSM_STATE_RESET or BOOT_FSM_STATE_LOAD */
+                /* 在加载期间获取启动类型，只能是 ERROR、RESET 或 LOAD 状态 */
                 boot_state = BOOT_GetBootStateDuringLoad();
                 break;
 
             case BOOT_FSM_STATE_RUN:
-                /* Load the program info from flash to variable, check if a program
-                has been loaded to flash, and check the validity of it by comparing
-                the saved CRC signature and current calculated CRC signature */
+                /* 从Flash加载程序信息到变量，检查是否已有程序加载到Flash，
+                   并通过比较保存的CRC签名和当前计算的CRC签名来检查其有效性 */
                 if (BOOT_IsProgramAvailableAndValidated()) {
                     if (BOOT_JumpInToLastFlashedProgram() == STD_OK) {
-                        /* This line can not be reached in real hardware, it is here
-                    for testing */
+                        /* 在真实硬件上永远无法执行到此行，此处仅用于测试 */
                         boot_state = BOOT_FSM_STATE_WAIT;
                     } else {
+                        /* 跳转失败，进入错误状态 */
                         boot_state = BOOT_FSM_STATE_ERROR;
                     }
                 } else {
+                    /* 程序不可用或校验失败，回到等待状态 */
                     boot_state = BOOT_FSM_STATE_WAIT;
                 }
                 break;
 
             case BOOT_FSM_STATE_RESET:
-                /* Reset the bootloader to its original state */
+                /* 将引导加载程序复位到初始状态 */
                 if (BOOT_ResetBootloader() == STD_NOT_OK) {
+                    /* 复位失败，进入错误状态 */
                     boot_state = BOOT_FSM_STATE_ERROR;
                 } else {
-                    /* This line can not be reached in real hardware, it is here
-                    for testing */
+                    /* 在真实硬件上永远无法执行到此行，此处仅用于测试 */
                     boot_state = BOOT_FSM_STATE_WAIT;
                 }
                 break;
 
             case BOOT_FSM_STATE_ERROR:
-                /* Wait for can request to handle the error (until now only reset) */
+                /* 等待CAN请求以处理错误（目前仅支持复位处理） */
                 boot_state = BOOT_GetBootStateDuringError();
                 break;
 
             default:
-                /* If boot_state is any state except for the registered states,
-                assign the boot_state the error FSM state. */
+                /* 如果 boot_state 是除已注册状态之外的任何状态，
+                   则将其分配为错误FSM状态 */
                 boot_state = BOOT_FSM_STATE_ERROR;
                 break;
         }
     }
 #pragma diag_push
 #pragma diag_suppress 112
-    /* AXIVION Next Codeline Style MisraC2012-2.1: we shall never get here when running on the target */
+    /* AXIVION Next Codeline Style MisraC2012-2.1: 在目标硬件上运行时，我们永远不应到达这里 */
     return 1;
 #pragma diag_pop
 }
 
-/*========== Externalized Static Function Implementations (Unit Test) =======*/
+/*========== 外部化的静态函数实现（单元测试） ================================*/
 #ifdef UNITY_UNIT_TEST
 #endif
