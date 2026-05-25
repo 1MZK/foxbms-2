@@ -1,59 +1,49 @@
 /**
  *
  * @copyright &copy; 2010 - 2026, Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.
- * All rights reserved.
+ * 版权所有。
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * 在满足以下条件的前提下，允许以源代码和二进制形式进行重新分发和使用，无论是否经过修改：
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * 1. 源代码的重新分发必须保留上述版权声明、此条件列表以及下述免责声明。
  *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ * 2. 二进制形式的重新分发必须在随分发提供的文档和/或其他材料中复制上述版权声明、
+ *    此条件列表以及下述免责声明。
  *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ * 3. 未经特定事先书面许可，版权持有者的名称及其贡献者的名称不得用于支持或推广
+ *    由本软件派生的产品。
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 本软件由版权持有者和贡献者“按原样”提供，不提供任何明示或暗示的保证，包括但不仅限于
+ * 对适销性和特定用途适用性的暗示保证。在任何情况下，版权持有者或贡献者对任何直接、间接、
+ * 偶然、特殊、惩罚性或后果性损害（包括但不仅限于替代商品或服务的采购、使用、数据或
+ * 利润的损失或业务中断）不承担责任，无论其基于何种责任理论，无论是合同责任、严格责任
+ * 或侵权（包括疏忽或其他），即使已被告知可能发生此类损害，也是如此。
  *
- * We kindly request you to use one or more of the following phrases to refer to
- * foxBMS in your hardware, software, documentation or advertising materials:
+ * 我们恳请您在您的硬件、软件、文档或广告材料中使用以下一个或多个短语来指代 foxBMS：
  *
- * - "This product uses parts of foxBMS&reg;"
- * - "This product includes parts of foxBMS&reg;"
- * - "This product is derived from foxBMS&reg;"
+ * - "本产品使用了 foxBMS&reg; 的部分内容"
+ * - "本产品包含了 foxBMS&reg; 的部分内容"
+ * - "本产品派生自 foxBMS&reg;"
  *
  */
 
 /**
  * @file    bms.c
- * @author  foxBMS Team
- * @date    2020-02-24 (date of creation)
- * @updated 2026-04-20 (date of last update)
+ * @author  foxBMS 团队
+ * @date    2020-02-24 (创建日期)
+ * @updated 2026-04-20 (最后更新日期)
  * @version v1.11.0
  * @ingroup ENGINE
  * @prefix  BMS
  *
- * @brief   Bms driver implementation
- * @details Implements the state machine that controls the BMS
+ * @brief   BMS 驱动实现
+ * @details 实现控制 BMS 的状态机
  *
  */
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 #include "bms.h"
 
 #include "battery_cell_cfg.h"
@@ -74,21 +64,21 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
-/** default value for unset "active delay time" */
+/*========== 宏和定义 =========================================================*/
+/** 未设置“活动延迟时间”的默认值 */
 #define BMS_NO_ACTIVE_DELAY_TIME_ms (UINT32_MAX)
 
 /**
- * Saves the last state and the last substate
+ * 保存上次状态和上次子状态
  */
 #define BMS_SAVE_LAST_STATES()                \
     bms_state.lastState    = bms_state.state; \
     bms_state.lastSubstate = bms_state.substate
 
-/*========== Static Constant and Variable Definitions =======================*/
+/*========== 静态常量和变量定义 =======================*/
 
 /**
- * contains the state of the bms state machine
+ * 包含 BMS 状态机的状态
  */
 static BMS_STATE_s bms_state = {
     .currentSystick                    = 0u,
@@ -125,103 +115,89 @@ static BMS_STATE_s bms_state = {
     .contactorToBeOpened               = CONT_UNDEFINED,
 };
 
-/** local copies of database tables */
+/** 数据库表的本地副本 */
 /**@{*/
 static DATA_BLOCK_MIN_MAX_s bms_tableMinMax         = {.header.uniqueId = DATA_BLOCK_ID_MIN_MAX};
 static DATA_BLOCK_OPEN_WIRE_s bms_tableOpenWire     = {.header.uniqueId = DATA_BLOCK_ID_OPEN_WIRE_BASE};
 static DATA_BLOCK_PACK_VALUES_s bms_tablePackValues = {.header.uniqueId = DATA_BLOCK_ID_PACK_VALUES};
 /**@}*/
 
-/*========== Extern Constant and Variable Definitions =======================*/
+/*========== 外部常量和变量定义 =======================*/
 
-/*========== Static Function Prototypes =====================================*/
+/*========== 静态函数原型 =====================================*/
 
 /**
- * @brief       checks the state requests that are made.
- * @details     This function checks the validity of the state requests. The
- *              results of the checked is returned immediately.
- * @param[in]   statereq    state request to be checked
- * @return      result of the state request that was made
+ * @brief       检查发出的状态请求。
+ * @details     此函数检查状态请求的有效性。检查结果立即返回。
+ * @param[in]   statereq    要检查的状态请求
+ * @return      发出的状态请求的结果
  */
 static BMS_RETURN_TYPE_e BMS_CheckStateRequest(BMS_STATE_REQUEST_e statereq);
 
 /**
- * @brief   transfers the current state request to the state machine.
- * @details This function takes the current state request from #bms_state
- *          transfers it to the state machine. It resets the value from
- *          #bms_state to #BMS_STATE_NO_REQUEST
- * @return  current state request
+ * @brief   将当前状态请求传递给状态机。
+ * @details 此函数从 #bms_state 获取当前状态请求并将其传递给状态机。
+ *          它将 #bms_state 的值重置为 #BMS_STATE_NO_REQUEST
+ * @return  当前状态请求
  */
 static BMS_STATE_REQUEST_e BMS_TransferStateRequest(void);
 
 /**
- * @brief   re-entrance check of SYS state machine trigger function
- * @details This function is not re-entrant and should only be called time- or
- *          event-triggered. It increments the triggerentry counter from the
- *          state variable bms_state. It should never be called by two
- *          different processes, so if it is the case, triggerentry should
- *          never be higher than 0 when this function is called.
- * @return  retval  0 if no further instance of the function is active, 0xff
- *          else
+ * @brief   SYS 状态机触发函数的重入检查
+ * @details 此函数不可重入，应仅由时间或事件触发。它递增状态变量 bms_state
+ *          的 triggerentry 计数器。它绝不应被两个不同的进程调用，因此如果是
+ *          这种情况，调用此函数时 triggerentry 永远不应大于 0。
+ * @return  retval  如果没有该函数的其他实例处于活动状态则返回 0，否则返回 0xff
  */
 static uint8_t BMS_CheckReEntrance(void);
 
 /**
- * @brief   Checks the state requests made to the BMS state machine.
- * @details Checks of the state request in the database and sets this value as
- *          return value.
- * @return  requested state
+ * @brief   检查向 BMS 状态机发出的状态请求。
+ * @details 检查数据库中的状态请求并将此值设置为返回值。
+ * @return  请求的状态
  */
 static uint8_t BMS_CheckCanRequests(void);
 
 /**
- * @brief   Checks all the error flags from diagnosis module with a severity of
- *          #DIAG_FATAL_ERROR
- * @details Checks all the error flags from diagnosis module with a severity of
- *          #DIAG_FATAL_ERROR. Furthermore, sets parameter minimumActiveDelay_ms
- *          of bms_state variable.
- * @return  true if error flag is set, otherwise false
+ * @brief   检查诊断模块中严重级别为 #DIAG_FATAL_ERROR 的所有错误标志
+ * @details 检查诊断模块中严重级别为 #DIAG_FATAL_ERROR 的所有错误标志。
+ *          此外，设置 bms_state 变量的 minimumActiveDelay_ms 参数。
+ * @return  如果错误标志被设置则返回 true，否则返回 false
  */
 static bool BMS_IsAnyFatalErrorFlagSet(void);
 
 /**
- * @brief   Checks if any error flag is set and handles delay until contactors
- *          need to be opened.
- * @details Checks all the diagnosis entries with severity of #DIAG_FATAL_ERROR
- *          and handles the configured delay until the contactors need to be
- *          opened. The shortest delay is used, if multiple errors are active at
- *          once.
- * @return  #STD_NOT_OK if error detected and delay time elapsed, otherwise #STD_OK
+ * @brief   检查是否设置了任何错误标志，并处理直到接触器需要断开的延迟。
+ * @details 检查所有严重级别为 #DIAG_FATAL_ERROR 的诊断条目，并处理配置的
+ *          延迟直到接触器需要断开。如果多个错误同时激活，则使用最短的延迟。
+ * @return  如果检测到错误且延迟时间已过则返回 #STD_NOT_OK，否则返回 #STD_OK
  */
 static STD_RETURN_TYPE_e BMS_IsBatterySystemStateOkay(void);
 
 /**
- * @brief   Checks if the contactor feedback for a specific contactor is valid
- *          need to be opened.
- * @details Reads error flag database entry and checks if the feedback for this
- *          specific contactor is valid or not.
- * @return  true if no error detected feedback is valid, otherwise false
+ * @brief   检查特定接触器的接触器反馈是否有效
+ * @details 读取错误标志数据库条目并检查此特定接触器的反馈是否有效。
+ * @return  如果未检测到错误且反馈有效则返回 true，否则返回 false
  */
 static bool BMS_IsContactorFeedbackValid(uint8_t stringNumber, CONT_TYPE_e contactorType);
 
-/** Get latest database entries for static module variables */
+/** 获取静态模块变量的最新数据库条目 */
 static void BMS_GetMeasurementValues(void);
 
 /**
- * @brief   Check for any open voltage sense wire
+ * @brief   检查是否有开路感测线
  */
 static void BMS_CheckOpenSenseWire(void);
 
 /**
- * @brief       Checks if the current limitations are violated
- * @param[in]   stringNumber          string addressed
- * @param[in]   pPackValues           pointer to pack values database entry
- * @param[in]   monitoringParameters
- * @param[in]   timeout_ms
- * @return      BMS_PRECHARGING_SUCCESSFUL if precharging succeeded
- *              BMS_PRECHARGING_ONGOING if precharging is ongoing
- *              BMS_PRECHARGING_FAILED if timeout reached and precharge
- *              process was not successful (type: #BMS_RESULT_PRECHARGE_PROCESS_e)
+ * @brief       检查是否违反了电流限制
+ * @param[in]   stringNumber          寻址的串
+ * @param[in]   pPackValues           指向包值数据库条目的指针
+ * @param[in]   monitoringParameters  监控参数
+ * @param[in]   timeout_ms            超时时间（毫秒）
+ * @return      如果预充成功则返回 BMS_PRECHARGING_SUCCESSFUL
+ *              如果预充正在进行则返回 BMS_PRECHARGING_ONGOING
+ *              如果达到超时且预充过程未成功则返回 BMS_PRECHARGING_FAILED (类型: #BMS_RESULT_PRECHARGE_PROCESS_e)
  */
 static BMS_RESULT_PRECHARGE_PROCESS_e BMS_MonitorPrechargeProcess(
     uint8_t stringNumber,
@@ -230,119 +206,106 @@ static BMS_RESULT_PRECHARGE_PROCESS_e BMS_MonitorPrechargeProcess(
     uint32_t timeout_ms);
 
 /**
- * @brief       Checks if passed battery current is below limit
- * @param[in]   stringNumber string addressed
- * @param[in]   pPackValues  pointer to pack values database entry
- * @return      #STD_OK if battery current is below limit, otherwise #STD_NOT_OK
+ * @brief       检查通过的电池电流是否低于限值
+ * @param[in]   stringNumber 寻址的串
+ * @param[in]   pPackValues  指向包值数据库条目的指针
+ * @return      如果电池电流低于限值则返回 #STD_OK，否则返回 #STD_NOT_OK
  */
 static STD_RETURN_TYPE_e BMS_IsPrechargeCurrentBelowLimit(
     uint8_t stringNumber,
     const DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief       Checks if the current limitations are violated
- * @param[in]   stringNumber string addressed
- * @param[in]   pPackValues  pointer to pack values database entry
- * @return      true if voltage difference between battery and DC link voltage is below limit, otherwise false
+ * @brief       检查是否违反了电流限制
+ * @param[in]   stringNumber 寻址的串
+ * @param[in]   pPackValues  指向包值数据库条目的指针
+ * @return      如果电池与直流母线电压之间的电压差低于限值则返回 true，否则返回 false
  */
 static STD_RETURN_TYPE_e BMS_IsPrechargeVoltageBelowLimit(
     uint8_t stringNumber,
     const DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Returns ID of string with highest total voltage
- * @details This is used to close the first string when drive-off is requested.
- * @param[in]   precharge   If #BMS_DO_NOT_TAKE_PRECHARGE_INTO_ACCOUNT,
- *                          precharge availability for string is ignored.
- *                          if #BMS_TAKE_PRECHARGE_INTO_ACCOUNT, only select
- *                          string that has precharge available.
- * @param[in]   pPackValues pointer to pack values database entry
- * @return  index of string with highest voltage If no string is available,
- *          returns #BMS_NO_STRING_AVAILABLE.
+ * @brief   返回总电压最高的串的 ID
+ * @details 这用于在请求行驶时闭合第一串。
+ * @param[in]   precharge   如果为 #BMS_DO_NOT_TAKE_PRECHARGE_INTO_ACCOUNT，
+ *                          则忽略串的预充可用性。
+ *                          如果为 #BMS_TAKE_PRECHARGE_INTO_ACCOUNT，则仅选择
+ *                          有预充可用的串。
+ * @param[in]   pPackValues 指向包值数据库条目的指针
+ * @return  电压最高的串的索引。如果没有可用的串，则返回 #BMS_NO_STRING_AVAILABLE。
  */
 static uint8_t BMS_GetHighestString(BMS_CONSIDER_PRECHARGE_e precharge, DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Returns ID of string with voltage closest to first closed string voltage
- * @details This is used to close further strings in drive.
- * @param[in]   precharge   If #BMS_DO_NOT_TAKE_PRECHARGE_INTO_ACCOUNT,
- *                          precharge availability for string is ignored.
- *                          if #BMS_TAKE_PRECHARGE_INTO_ACCOUNT, only select
- *                          string that has precharge available.
- * @param[in]   pPackValues pointer to pack values database entry
- * @return  index of string with voltage closest to the first closed string voltage.
- *          If no string is available, returns #BMS_NO_STRING_AVAILABLE.
+ * @brief   返回电压最接近首个闭合串电压的串的 ID
+ * @details 这用于在行驶模式下闭合更多串。
+ * @param[in]   precharge   如果为 #BMS_DO_NOT_TAKE_PRECHARGE_INTO_ACCOUNT，
+ *                          则忽略串的预充可用性。
+ *                          如果为 #BMS_TAKE_PRECHARGE_INTO_ACCOUNT，则仅选择
+ *                          有预充可用的串。
+ * @param[in]   pPackValues 指向包值数据库条目的指针
+ * @return  电压最接近首个闭合串电压的串的索引。
+ *          如果没有可用的串，则返回 #BMS_NO_STRING_AVAILABLE。
  */
 static uint8_t BMS_GetClosestString(BMS_CONSIDER_PRECHARGE_e precharge, DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Returns ID of string with lowest total voltage
- * @details This is used to close the first string when charge-off is requested.
+ * @brief   返回总电压最低的串的 ID
+ * @details 这用于在请求充电时闭合第一串。
  *
- * @param[in]   precharge   If 0, precharge availability for string is ignored.
- *                          If 1, only selects a string that has precharge
- *                          available.
- * @param[in]   pPackValues pointer to pack values database entry
- * @return  index of string with lowest voltage. If no string is available,
- *          returns #BMS_NO_STRING_AVAILABLE.
+ * @param[in]   precharge   如果为 0，则忽略串的预充可用性。
+ *                          如果为 1，则仅选择有预充可用的串。
+ * @param[in]   pPackValues 指向包值数据库条目的指针
+ * @return  电压最低的串的索引。如果没有可用的串，则返回 #BMS_NO_STRING_AVAILABLE。
  */
 static uint8_t BMS_GetLowestString(BMS_CONSIDER_PRECHARGE_e precharge, DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Returns voltage difference between first closed string and
- *          string ID
- * @details This function is used to check voltage when trying to close further
- *          strings.
- * @param[in]   string  ID of string that must be compared with first closed
- *                      string
- * @param[in]   pPackValues pointer to pack values database entry
- * @return voltage difference in mV, will return INT32_MAX if voltages are
- *         invalid and difference can not be calculated
+ * @brief   返回首个闭合串与指定串 ID 之间的电压差
+ * @details 此函数用于在尝试闭合更多串时检查电压。
+ * @param[in]   string  必须与首个闭合串进行比较的串 ID
+ * @param[in]   pPackValues 指向包值数据库条目的指针
+ * @return  电压差（单位 mV），如果电压无效且无法计算差值则返回 INT32_MAX
  */
 static int32_t BMS_GetStringVoltageDifference(uint8_t string, const DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Returns the average current flowing through all strings.
- * @details This function is used when closing strings.
- * @param[in]   pPackValues pointer to pack values database entry
- * @return  average current taking all strings into account in mA. INT32_MAX if there is no valid current measurement
+ * @brief   返回流经所有串的平均电流。
+ * @details 此函数在闭合串时使用。
+ * @param[in]   pPackValues 指向包值数据库条目的指针
+ * @return  考虑所有串的平均电流（单位 mA）。如果没有有效的电流测量则返回 INT32_MAX
  */
 static int32_t BMS_GetAverageStringCurrent(DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Updates battery system state variable depending on measured/recent
- *          current values
- * @param[in]   pPackValues  recent measured values from current sensor
+ * @brief   根据测量/最近的电流值更新电池系统状态变量
+ * @param[in]   pPackValues  来自电流传感器的最近测量值
  */
 static void BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackValues);
 
 /**
- * @brief   Get first string contactor that should be opened depending on the
- *          actual current flow direction
- * @details Check the mounting direction of the contactors and open the
- *          contactor that is mounted in the preferred current flow direction.
- *          Open the plus contactor first if, there is no contactor in
- *          preferred direction to the current flow to open available. This may
- *          be either because both contactors are installed in the same
- *          direction or because the contactors are bidirectional.
- * @param stringNumber         string that will be opened
- * @param flowDirection        current flow direction (charging or discharging)
- * @return #CONT_TYPE_e contactor that should be opened
+ * @brief   根据实际电流流向获取第一个应该断开的串接触器
+ * @details 检查接触器的安装方向，并断开沿首选电流方向安装的接触器。
+ *          如果没有沿首选电流方向断开可用的接触器，则先断开正极接触器。
+ *          这可能是因为两个接触器安装在同一方向，或者接触器是双向的。
+ * @param stringNumber         将要断开的串
+ * @param flowDirection        电流流向（充电或放电）
+ * @return #CONT_TYPE_e 应该断开的接触器
  */
 static CONT_TYPE_e BMS_GetFirstContactorToBeOpened(uint8_t stringNumber, BMS_CURRENT_FLOW_STATE_e flowDirection);
 
 /**
- * @brief   Get second string contactor that should be opened
- * @details Mounting direction of the contactor does not need to be checked
- *          for the second contactor as the current has already been
- *          interrupted opening the first contactor.
- * @param stringNumber             string that will be opened
- * @param firstOpenedContactorType type of first contactor that has been opened
- * @return #CONT_TYPE_e contactor that should be opened
+ * @brief   获取第二个应该断开的串接触器
+ * @details 对于第二个接触器，不需要检查接触器的安装方向，因为断开第一个
+ *          接触器时电流已经被切断。
+ * @param stringNumber             将要断开的串
+ * @param firstOpenedContactorType 已断开的第一个接触器的类型
+ * @return #CONT_TYPE_e 应该断开的接触器
  */
 static CONT_TYPE_e BMS_GetSecondContactorToBeOpened(uint8_t stringNumber, CONT_TYPE_e firstOpenedContactorType);
 
-/*========== Static Function Implementations ================================*/
+/*========== 静态函数实现 ================================*/
 
 static BMS_RETURN_TYPE_e BMS_CheckStateRequest(BMS_STATE_REQUEST_e statereq) {
     if (statereq == BMS_STATE_ERROR_REQUEST) {
@@ -350,7 +313,7 @@ static BMS_RETURN_TYPE_e BMS_CheckStateRequest(BMS_STATE_REQUEST_e statereq) {
     }
 
     if (bms_state.stateRequest == BMS_STATE_NO_REQUEST) {
-        /* init only allowed from the uninitialized state */
+        /* 仅允许从未初始化状态进行初始化 */
         if (statereq == BMS_STATE_INITIALIZATION_REQUEST) {
             if (bms_state.state == BMS_FSM_STATE_UNINITIALIZED) {
                 return BMS_OK;
@@ -371,7 +334,7 @@ static uint8_t BMS_CheckReEntrance(void) {
     if (!bms_state.triggerentry) {
         bms_state.triggerentry++;
     } else {
-        retval = 0xFF; /* multiple calls of function */
+        retval = 0xFF; /* 函数被多次调用 */
     }
     OS_ExitTaskCritical();
     return retval;
@@ -406,7 +369,7 @@ static uint8_t BMS_CheckCanRequests(void) {
     } else if (request.stateRequestViaCan == BMS_REQ_ID_NOREQ) {
         retVal = BMS_REQ_ID_NOREQ;
     } else {
-        /* invalid or no request, default to BMS_REQ_ID_NOREQ (already set) */
+        /* 无效或无请求，默认为 BMS_REQ_ID_NOREQ (已设置) */
     }
 
     return retVal;
@@ -416,19 +379,19 @@ static void BMS_CheckOpenSenseWire(void) {
     uint8_t openWireDetected = 0;
 
     for (uint8_t s = 0u; s < BS_NR_OF_STRINGS; s++) {
-        /* Iterate over all modules */
+        /* 遍历所有模块 */
         for (uint8_t m = 0u; m < BS_NR_OF_MODULES_PER_STRING; m++) {
-            /* Iterate over all voltage sense wires: cells per module + 1 */
+            /* 遍历所有电压感测线：每模组电芯数 + 1 */
             for (uint8_t wire = 0u; wire < (BS_NR_OF_CELL_BLOCKS_PER_MODULE + 1); wire++) {
-                /* open wire detected */
+                /* 检测到开路 */
                 if (bms_tableOpenWire.openWire[s][(wire + (m * (BS_NR_OF_CELL_BLOCKS_PER_MODULE + 1))) == 1] > 0u) {
                     openWireDetected++;
 
-                    /* Add additional error handling here */
+                    /* 在此处添加额外的错误处理 */
                 }
             }
         }
-        /* Set error if open wire detected */
+        /* 如果检测到开路则设置错误 */
         if (openWireDetected == 0u) {
             DIAG_Handler(DIAG_ID_AFE_OPEN_WIRE, DIAG_EVENT_OK, DIAG_STRING, s);
         } else {
@@ -442,16 +405,15 @@ static BMS_RESULT_PRECHARGE_PROCESS_e BMS_MonitorPrechargeProcess(
     const DATA_BLOCK_PACK_VALUES_s *pPackValues,
     BS_PRECHARGE_MONITORING_e monitoringParameters,
     uint32_t timeout_ms) {
-    /* make sure that we do not access the arrays in the database
-       tables out of bounds */
+    /* 确保我们不会越界访问数据库表中的数组 */
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
     FAS_ASSERT(pPackValues != NULL_PTR);
     FAS_ASSERT(
         (monitoringParameters == BS_PRECHARGE_MONITOR_CURRENT) ||
         (monitoringParameters == BS_PRECHARGE_MONITOR_VOLTAGE) ||
         (monitoringParameters == BS_PRECHARGE_MONITOR_CURRENT_AND_VOLTAGE));
-    /* AXIVION Routine Generic-MissingParameterAssert: timeout_ms: parameter accepts whole range */
-    /* Indicate precharging ongoing until it has been finished or precharging failed */
+    /* AXIVION 常规 Generic-MissingParameterAssert: timeout_ms: 参数接受整个范围 */
+    /* 指示预充正在进行，直到完成或预充失败 */
     BMS_RESULT_PRECHARGE_PROCESS_e prechargingState = BMS_PRECHARGING_ONGOING;
     STD_RETURN_TYPE_e currentPrecharged             = STD_NOT_OK;
     STD_RETURN_TYPE_e voltagePrecharged             = STD_NOT_OK;
@@ -472,7 +434,7 @@ static BMS_RESULT_PRECHARGE_PROCESS_e BMS_MonitorPrechargeProcess(
         (void)DIAG_Handler(DIAG_ID_PRECHARGE_ABORT_REASON_VOLTAGE, DIAG_EVENT_OK, DIAG_STRING, stringNumber);
         (void)DIAG_Handler(DIAG_ID_PRECHARGE_ABORT_REASON_CURRENT, DIAG_EVENT_OK, DIAG_STRING, stringNumber);
     } else {
-        /* Check if precharging timeout has reached to indicate a failure or not */
+        /* 检查是否达到预充超时以指示失败 */
         if (bms_state.currentSystick - bms_state.startOfPrecharging > timeout_ms) {
             prechargingState = BMS_PRECHARGING_FAILED;
             DIAG_CheckEvent(currentPrecharged, DIAG_ID_PRECHARGE_ABORT_REASON_CURRENT, DIAG_STRING, stringNumber);
@@ -485,10 +447,10 @@ static BMS_RESULT_PRECHARGE_PROCESS_e BMS_MonitorPrechargeProcess(
 static STD_RETURN_TYPE_e BMS_IsPrechargeCurrentBelowLimit(
     uint8_t stringNumber,
     const DATA_BLOCK_PACK_VALUES_s *pPackValues) {
-    /* AXIVION Routine Generic-MissingParameterAssert: stringNumber: function parameters are checked by caller */
-    /* AXIVION Routine Generic-MissingParameterAssert: pPackValues: function parameters are checked by caller */
+    /* AXIVION 常规 Generic-MissingParameterAssert: stringNumber: 函数参数由调用者检查 */
+    /* AXIVION 常规 Generic-MissingParameterAssert: pPackValues: 函数参数由调用者检查 */
     STD_RETURN_TYPE_e retval = STD_NOT_OK;
-    /* Only current, not the current direction is checked */
+    /* 仅检查电流，不检查电流方向 */
     if ((pPackValues->invalidStringCurrent[stringNumber] == 0u) &&
         ((MATH_AbsInt32_t(pPackValues->stringCurrent_mA[stringNumber]) < BMS_PRECHARGE_CURRENT_THRESHOLD_mA))) {
         retval = STD_OK;
@@ -499,8 +461,8 @@ static STD_RETURN_TYPE_e BMS_IsPrechargeCurrentBelowLimit(
 static STD_RETURN_TYPE_e BMS_IsPrechargeVoltageBelowLimit(
     uint8_t stringNumber,
     const DATA_BLOCK_PACK_VALUES_s *pPackValues) {
-    /* AXIVION Routine Generic-MissingParameterAssert: stringNumber: function parameters are checked by caller */
-    /* AXIVION Routine Generic-MissingParameterAssert: pPackValues: function parameters are checked by caller */
+    /* AXIVION 常规 Generic-MissingParameterAssert: stringNumber: 函数参数由调用者检查 */
+    /* AXIVION 常规 Generic-MissingParameterAssert: pPackValues: 函数参数由调用者检查 */
     STD_RETURN_TYPE_e retval = STD_NOT_OK;
     if ((pPackValues->invalidStringVoltage[stringNumber] == 0u) && (pPackValues->invalidHvBusVoltage == 0u)) {
         const int64_t cont_prechargeVoltDiff_mV = MATH_AbsInt64_t(
@@ -519,9 +481,9 @@ static bool BMS_IsAnyFatalErrorFlagSet(void) {
         const STD_RETURN_TYPE_e diagnosisState =
             DIAG_GetDiagnosisEntryState(diag_device.pFatalErrorLinkTable[entry]->id);
         if (STD_NOT_OK == diagnosisState) {
-            /* Fatal error detected -> get delay of this error until contactors shall be opened */
+            /* 检测到致命错误 -> 获取此错误直到接触器应断开的延迟 */
             const uint32_t kDelay_ms = DIAG_GetDelay(diag_device.pFatalErrorLinkTable[entry]->id);
-            /* Check if delay of detected failure is smaller than the delay of a previously detected failure */
+            /* 检查检测到的故障延迟是否小于先前检测到的故障延迟 */
             if (bms_state.minimumActiveDelay_ms > kDelay_ms) {
                 bms_state.minimumActiveDelay_ms = kDelay_ms;
             }
@@ -532,16 +494,16 @@ static bool BMS_IsAnyFatalErrorFlagSet(void) {
 }
 
 static STD_RETURN_TYPE_e BMS_IsBatterySystemStateOkay(void) {
-    STD_RETURN_TYPE_e retVal          = STD_OK; /* is set to STD_NOT_OK if error detected */
+    STD_RETURN_TYPE_e retVal          = STD_OK; /* 如果检测到错误则设置为 STD_NOT_OK */
     static uint32_t previousTimestamp = 0u;
     uint32_t timestamp                = OS_GetTickCount();
 
-    /* Check if any fatal error is detected */
+    /* 检查是否检测到任何致命错误 */
     const bool isErrorActive = BMS_IsAnyFatalErrorFlagSet();
 
-    /** Check if a fatal error has been detected previously. If yes, check delay */
+    /** 检查之前是否检测到致命错误。如果是，检查延迟 */
     if (bms_state.transitionToErrorState == true) {
-        /* Decrease active delay since last call */
+        /* 减少自上次调用以来的活动延迟 */
         const uint32_t timeSinceLastCall_ms = timestamp - previousTimestamp;
         if (timeSinceLastCall_ms <= bms_state.remainingDelay_ms) {
             bms_state.remainingDelay_ms -= timeSinceLastCall_ms;
@@ -549,24 +511,22 @@ static STD_RETURN_TYPE_e BMS_IsBatterySystemStateOkay(void) {
             bms_state.remainingDelay_ms = 0u;
         }
 
-        /* Check if delay from a new error is shorter then active delay from
-         * previously detected error in BMS state machine */
+        /* 检查新错误的延迟是否短于 BMS 状态机中先前检测到错误的活动延迟 */
         if (bms_state.remainingDelay_ms >= bms_state.minimumActiveDelay_ms) {
             bms_state.remainingDelay_ms = bms_state.minimumActiveDelay_ms;
         }
     } else {
-        /* Delay is not active, check if it should be activated */
+        /* 延迟未激活，检查是否应激活 */
         if (isErrorActive == true) {
             bms_state.transitionToErrorState = true;
             bms_state.remainingDelay_ms      = bms_state.minimumActiveDelay_ms;
         }
     }
 
-    /** Set previous timestamp for next call */
+    /** 设置上次时间戳以供下次调用 */
     previousTimestamp = timestamp;
 
-    /* Check if bms state machine should switch to error state. This is the case
-     * if the delay is activated and the remaining delay is down to 0 */
+    /* 检查 bms 状态机是否应切换到错误状态。如果延迟被激活且剩余延迟降至 0，则属于这种情况 */
     if ((bms_state.transitionToErrorState == true) && (bms_state.remainingDelay_ms == 0u)) {
         retVal = STD_NOT_OK;
     }
@@ -578,10 +538,10 @@ static bool BMS_IsContactorFeedbackValid(uint8_t stringNumber, CONT_TYPE_e conta
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
     FAS_ASSERT(contactorType != CONT_UNDEFINED);
     bool feedbackValid = false;
-    /* Read latest error flags from database */
+    /* 从数据库读取最新的错误标志 */
     DATA_BLOCK_ERROR_STATE_s tableErrorFlags = {.header.uniqueId = DATA_BLOCK_ID_ERROR_STATE};
     DATA_READ_DATA(&tableErrorFlags);
-    /* Check if contactor feedback is valid */
+    /* 检查接触器反馈是否有效 */
     switch (contactorType) {
         case CONT_PLUS:
             if (tableErrorFlags.contactorInPositivePathOfStringFeedbackError[stringNumber] == false) {
@@ -599,7 +559,7 @@ static bool BMS_IsContactorFeedbackValid(uint8_t stringNumber, CONT_TYPE_e conta
             }
             break;
         default:
-            /* CONT_UNDEFINED already prevent via assert */
+            /* CONT_UNDEFINED 已通过断言阻止 */
             break;
     }
     return feedbackValid;
@@ -636,16 +596,16 @@ static uint8_t BMS_GetClosestString(BMS_CONSIDER_PRECHARGE_e precharge, DATA_BLO
     int32_t closedStringVoltage_mV = 0;
     bool searchString              = false;
 
-    /* Get voltage of first closed string */
+    /* 获取首个闭合串的电压 */
     if (pPackValues->invalidStringVoltage[bms_state.firstClosedString] == 0u) {
         closedStringVoltage_mV = pPackValues->stringVoltage_mV[bms_state.firstClosedString];
         searchString           = true;
     } else if (pPackValues->invalidHvBusVoltage == 0u) {
-        /* Use high voltage bus voltage if measured string voltage is invalid */
+        /* 如果测量的串电压无效，则使用高压母线电压 */
         closedStringVoltage_mV = pPackValues->highVoltageBusVoltage_mV;
         searchString           = true;
     } else {
-        /* Do not search for next string  if no valid voltages could be measured */
+        /* 如果无法测量有效电压，则不搜索下一个串 */
         searchString = false;
     }
 
@@ -654,7 +614,7 @@ static uint8_t BMS_GetClosestString(BMS_CONSIDER_PRECHARGE_e precharge, DATA_BLO
             const bool isStringClosed          = BMS_IsStringClosed(s);
             const uint8_t isStringVoltageValid = pPackValues->invalidStringVoltage[s];
             if ((isStringClosed == false) && (isStringVoltageValid == 0u)) {
-                /* Only check open strings with valid voltages */
+                /* 仅检查具有有效电压的断开串 */
                 int32_t minimumVoltageDifference_mV = INT32_MAX;
                 int32_t voltageDifference_mV        = labs(closedStringVoltage_mV - pPackValues->stringVoltage_mV[s]);
                 if (voltageDifference_mV <= minimumVoltageDifference_mV) {
@@ -706,15 +666,15 @@ static int32_t BMS_GetStringVoltageDifference(uint8_t string, const DATA_BLOCK_P
     int32_t voltageDifference_mV = INT32_MAX;
     if ((pPackValues->invalidStringVoltage[string] == 0u) &&
         (pPackValues->invalidStringVoltage[bms_state.firstClosedString] == 0u)) {
-        /* Calculate difference between string voltages */
+        /* 计算串电压之间的差值 */
         voltageDifference_mV = MATH_AbsInt32_t(
             pPackValues->stringVoltage_mV[string] - pPackValues->stringVoltage_mV[bms_state.firstClosedString]);
     } else if ((pPackValues->invalidStringVoltage[string] == 0u) && (pPackValues->invalidHvBusVoltage == 0u)) {
-        /* Calculate difference between string and high voltage bus voltage */
+        /* 计算串与高压母线电压之间的差值 */
         voltageDifference_mV =
             MATH_AbsInt32_t(pPackValues->stringVoltage_mV[string] - pPackValues->highVoltageBusVoltage_mV);
     } else {
-        /* No valid voltages for comparison -> do not calculate difference and return INT32_MAX */
+        /* 没有有效电压可供比较 -> 不计算差值并返回 INT32_MAX */
         voltageDifference_mV = INT32_MAX;
     }
     return voltageDifference_mV;
@@ -732,21 +692,20 @@ static int32_t BMS_GetAverageStringCurrent(DATA_BLOCK_PACK_VALUES_s *pPackValues
 static void BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackValues) {
     FAS_ASSERT(pPackValues != NULL_PTR);
 
-    /* Only update system state if current value is valid */
+    /* 仅当电流值有效时更新系统状态 */
     if (pPackValues->invalidPackCurrent == 0u) {
         if (BS_POSITIVE_DISCHARGE_CURRENT == true) {
-            /* Positive current values equal a discharge of the battery system */
-            if (pPackValues->packCurrent_mA >= BS_REST_CURRENT_mA) { /* TODO: string use pack current */
+            /* 正电流值等于电池系统放电 */
+            if (pPackValues->packCurrent_mA >= BS_REST_CURRENT_mA) { /* TODO: 串使用包电流 */
                 bms_state.currentFlowState = BMS_DISCHARGING;
                 bms_state.restTimer_10ms   = BS_RELAXATION_PERIOD_10ms;
             } else if (pPackValues->packCurrent_mA <= -BS_REST_CURRENT_mA) {
                 bms_state.currentFlowState = BMS_CHARGING;
                 bms_state.restTimer_10ms   = BS_RELAXATION_PERIOD_10ms;
             } else {
-                /* Current below rest current: either battery system is at rest
-                 * or the relaxation process is still ongoing */
+                /* 电流低于静置电流：电池系统处于静置状态或弛豫过程仍在进行 */
                 if (bms_state.restTimer_10ms == 0u) {
-                    /* Rest timer elapsed -> battery system at rest */
+                    /* 静置计时器已过 -> 电池系统处于静置状态 */
                     bms_state.currentFlowState = BMS_AT_REST;
                 } else {
                     bms_state.restTimer_10ms--;
@@ -754,7 +713,7 @@ static void BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackValues) 
                 }
             }
         } else {
-            /* Negative current values equal a discharge of the battery system */
+            /* 负电流值等于电池系统放电 */
             if (pPackValues->packCurrent_mA <= -BS_REST_CURRENT_mA) {
                 bms_state.currentFlowState = BMS_DISCHARGING;
                 bms_state.restTimer_10ms   = BS_RELAXATION_PERIOD_10ms;
@@ -762,10 +721,9 @@ static void BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackValues) 
                 bms_state.currentFlowState = BMS_CHARGING;
                 bms_state.restTimer_10ms   = BS_RELAXATION_PERIOD_10ms;
             } else {
-                /* Current below rest current: either battery system is at rest
-                 * or the relaxation process is still ongoing */
+                /* 电流低于静置电流：电池系统处于静置状态或弛豫过程仍在进行 */
                 if (bms_state.restTimer_10ms == 0u) {
-                    /* Rest timer elapsed -> battery system at rest */
+                    /* 静置计时器已过 -> 电池系统处于静置状态 */
                     bms_state.currentFlowState = BMS_AT_REST;
                 } else {
                     bms_state.restTimer_10ms--;
@@ -778,22 +736,22 @@ static void BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackValues) 
 
 static CONT_TYPE_e BMS_GetFirstContactorToBeOpened(uint8_t stringNumber, BMS_CURRENT_FLOW_STATE_e flowDirection) {
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
-    /* AXIVION Routine Generic-MissingParameterAssert: flowDirection: parameter accepts all defined enums */
+    /* AXIVION 常规 Generic-MissingParameterAssert: flowDirection: 参数接受所有定义的枚举 */
     CONT_TYPE_e contactorToBeOpened                     = CONT_UNDEFINED;
     CONT_CURRENT_BREAKING_DIRECTION_e breakingDirection = CONT_BIDIRECTIONAL;
-    /* Required preferred opening direction dependent on the current direction */
+    /* 根据电流方向所需的优先断开方向 */
     if (flowDirection == BMS_CHARGING) {
         breakingDirection = CONT_CHARGING_DIRECTION;
     } else {
         breakingDirection = CONT_DISCHARGING_DIRECTION;
     }
-    /* Iterate over contactor array and search for wanted contactor */
+    /* 遍历接触器数组并搜索所需的接触器 */
     uint8_t contactor = 0u;
     for (; contactor < BS_NR_OF_CONTACTORS; contactor++) {
-        /* Search for:
-         * 1. contactor from requested string
-         * 2. contactor mounted in preferred opening direction or is bidirectional
-         * 3. is no precharge contactor */
+        /* 搜索：
+         * 1. 来自请求串的接触器
+         * 2. 沿优先断开方向安装或双向的接触器
+         * 3. 不是预充接触器 */
         bool correctString           = (bool)(stringNumber == cont_contactorStates[contactor].stringIndex);
         bool inPreferredDirection    = (bool)(breakingDirection == cont_contactorStates[contactor].breakingDirection);
         bool hasNoPreferredDirection = (bool)(cont_contactorStates[contactor].breakingDirection == CONT_BIDIRECTIONAL);
@@ -804,13 +762,12 @@ static CONT_TYPE_e BMS_GetFirstContactorToBeOpened(uint8_t stringNumber, BMS_CUR
         }
     }
     if (contactor == BS_NR_OF_CONTACTORS) {
-        /* No contactor mounted in preferred current direction found. Select
-         * the PLUS contactor found in array cont_contactorStates from the
-         * passed string */
+        /* 未找到沿首选电流方向安装的接触器。在数组 cont_contactorStates 中
+         * 选择来自传递串的 PLUS 接触器 */
         for (contactor = 0u; contactor < BS_NR_OF_CONTACTORS; contactor++) {
-            /* Search for:
-             * 1. contactor from requested string
-             * 2. is PLUS contactor */
+            /* 搜索：
+             * 1. 来自请求串的接触器
+             * 2. 是 PLUS 接触器 */
             if ((stringNumber == cont_contactorStates[contactor].stringIndex) &&
                 (cont_contactorStates[contactor].type == CONT_PLUS)) {
                 contactorToBeOpened = cont_contactorStates[contactor].type;
@@ -819,12 +776,11 @@ static CONT_TYPE_e BMS_GetFirstContactorToBeOpened(uint8_t stringNumber, BMS_CUR
         }
     }
     if (contactor == BS_NR_OF_CONTACTORS) {
-        /* No PLUS contactor found. Select MINUS contactor found in array
-         * cont_contactorStates from the passed string */
+        /* 未找到 PLUS 接触器。在数组 cont_contactorStates 中选择来自传递串的 MINUS 接触器 */
         for (contactor = 0u; contactor < BS_NR_OF_CONTACTORS; contactor++) {
-            /* Search for:
-             * 1. contactor from requested string
-             * 2. is PLUS contactor */
+            /* 搜索：
+             * 1. 来自请求串的接触器
+             * 2. 是 PLUS 接触器 */
             if ((stringNumber == cont_contactorStates[contactor].stringIndex) &&
                 (cont_contactorStates[contactor].type == CONT_MINUS)) {
                 contactorToBeOpened = cont_contactorStates[contactor].type;
@@ -833,7 +789,7 @@ static CONT_TYPE_e BMS_GetFirstContactorToBeOpened(uint8_t stringNumber, BMS_CUR
         }
     }
     if (contactor == BS_NR_OF_CONTACTORS) {
-        /* No PLUS or MAIN_MINUS contactor found in requested string. */
+        /* 在请求的串中未找到 PLUS 或 MAIN_MINUS 接触器。 */
         FAS_ASSERT(FAS_TRAP);
     }
     return contactorToBeOpened;
@@ -843,16 +799,16 @@ static CONT_TYPE_e BMS_GetSecondContactorToBeOpened(uint8_t stringNumber, CONT_T
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
     FAS_ASSERT((firstOpenedContactorType != CONT_UNDEFINED) && (firstOpenedContactorType != CONT_PRECHARGE));
     CONT_TYPE_e contactorToBeOpened = CONT_UNDEFINED;
-    /* Check what contactor has already been opened and select the other one */
+    /* 检查哪个接触器已经断开并选择另一个 */
     if (firstOpenedContactorType == CONT_PLUS) {
         contactorToBeOpened = CONT_MINUS;
     } else {
         contactorToBeOpened = CONT_PLUS;
     }
-    /* Iterate over contactor array and search for wanted contactor */
+    /* 遍历接触器数组并搜索所需的接触器 */
     uint8_t contactor = 0u;
     for (; contactor < BS_NR_OF_CONTACTORS; contactor++) {
-        /* Search for specific contactor from requested string */
+        /* 搜索来自请求串的特定接触器 */
         if ((stringNumber == cont_contactorStates[contactor].stringIndex) &&
             (contactorToBeOpened == cont_contactorStates[contactor].type)) {
             contactorToBeOpened = cont_contactorStates[contactor].type;
@@ -860,14 +816,14 @@ static CONT_TYPE_e BMS_GetSecondContactorToBeOpened(uint8_t stringNumber, CONT_T
         }
     }
     if (contactor == BS_NR_OF_CONTACTORS) {
-        /* No PLUS or MAIN_MINUS contactor found in requested string.
-         * Apparently, only one contactor has been defined for this string */
+        /* 在请求的串中未找到 PLUS 或 MAIN_MINUS 接触器。
+         * 显然，该串只定义了一个接触器 */
         FAS_ASSERT(FAS_TRAP);
     }
     return contactorToBeOpened;
 }
 
-/*========== Extern Function Implementations ================================*/
+/*========== 外部函数实现 ================================*/
 
 extern STD_RETURN_TYPE_e BMS_GetInitializationState(void) {
     return bms_state.initFinished;
@@ -917,7 +873,7 @@ void BMS_Trigger(void) {
         BMS_CheckOpenSenseWire();
         CONT_CheckFeedback();
     }
-    /* Check re-entrance of function */
+    /* 检查函数的重入 */
     if (BMS_CheckReEntrance() > 0u) {
         return;
     }
@@ -940,15 +896,15 @@ void BMS_Trigger(void) {
     if (bms_state.timer > 0u) {
         if ((--bms_state.timer) > 0u) {
             bms_state.triggerentry--;
-            return; /* handle state machine only if timer has elapsed */
+            return; /* 仅在计时器到期时处理状态机 */
         }
     }
 
-    /****Happens every time the state machine is triggered**************/
+    /****每次触发状态机时发生**************/
     switch (bms_state.state) {
-        /****************************UNINITIALIZED****************************/
+        /****************************未初始化****************************/
         case BMS_FSM_STATE_UNINITIALIZED:
-            /* waiting for Initialization Request */
+            /* 等待初始化请求 */
             statereq = BMS_TransferStateRequest();
             if (statereq == BMS_STATE_INITIALIZATION_REQUEST) {
                 BMS_SAVE_LAST_STATES();
@@ -956,16 +912,16 @@ void BMS_Trigger(void) {
                 bms_state.state    = BMS_FSM_STATE_INITIALIZATION;
                 bms_state.substate = BMS_FSM_SUBSTATE_ENTRY;
             } else if (statereq == BMS_STATE_NO_REQUEST) {
-                /* no actual request pending */
+                /* 无实际请求挂起 */
             } else {
-                bms_state.ErrRequestCounter++; /* illegal request pending */
+                bms_state.ErrRequestCounter++; /* 非法请求挂起 */
             }
             break;
 
-        /****************************INITIALIZATION***************************/
+        /****************************初始化***************************/
         case BMS_FSM_STATE_INITIALIZATION:
             BMS_SAVE_LAST_STATES();
-            /* Reset ALERT mode flag */
+            /* 重置 ALERT 模式标志 */
             DIAG_Handler(DIAG_ID_ALERT_MODE, DIAG_EVENT_OK, DIAG_SYSTEM, 0u);
             bms_state.initFinished = STD_OK;
             bms_state.timer        = BMS_FSM_LONGTIME;
@@ -973,11 +929,11 @@ void BMS_Trigger(void) {
             bms_state.substate     = BMS_FSM_SUBSTATE_ENTRY;
             break;
 
-        /****************************INITIALIZED******************************/
+        /****************************已初始化******************************/
         case BMS_FSM_STATE_INITIALIZED:
             BMS_SAVE_LAST_STATES();
             if (IMD_RequestInsulationMeasurement() == IMD_ILLEGAL_REQUEST) {
-                /* Initialization of IMD device not finished yet -> wait until this is finished before moving on */
+                /* IMD 设备初始化尚未完成 -> 等待完成后再继续 */
                 bms_state.timer = BMS_FSM_LONGTIME;
             } else {
                 bms_state.timer    = BMS_FSM_SHORTTIME;
@@ -986,7 +942,7 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************IDLE*************************************/
+        /****************************空闲*************************************/
         case BMS_FSM_STATE_IDLE:
             BMS_SAVE_LAST_STATES();
 
@@ -1024,13 +980,13 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************OPEN CONTACTORS**************************/
+        /****************************断开接触器**************************/
         case BMS_FSM_STATE_OPEN_CONTACTORS:
             BMS_SAVE_LAST_STATES();
 
             if (bms_state.substate == BMS_FSM_SUBSTATE_ENTRY) {
                 BAL_SetStateRequest(BAL_STATE_NO_BALANCING_REQUEST);
-                /* Check if the error reason is the loss of supply voltage clamp 30C */
+                /* 检查错误原因是否是电源电压钳位 30C 丢失 */
                 if (DIAG_GetDiagnosisEntryState(DIAG_ID_SUPPLY_VOLTAGE_CLAMP_30C_LOST) == STD_NOT_OK) {
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_HANDLE_SUPPLY_VOLTAGE_30C_LOSS;
@@ -1040,49 +996,46 @@ void BMS_Trigger(void) {
                 }
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_OPEN_ALL_PRECHARGE_CONTACTORS) {
-                /* Precharge contactors can always be opened as the precharge
-                 * resistor limits the maximum current */
+                /* 预充接触器总是可以断开，因为预充电阻限制了最大电流 */
                 CONT_OpenAllPrechargeContactors();
 
-                /* Regular string opening - Open one string after another,
-                      * starting with highest string index */
+                /* 常规串断开 - 逐个断开串，从最高串索引开始 */
                 stringNumber       = BS_NR_OF_STRINGS - 1u;
                 bms_state.substate = BMS_FSM_SUBSTATE_OPEN_FIRST_STRING_CONTACTOR;
                 bms_state.timer    = BMS_TIME_WAIT_AFTER_OPENING_PRECHARGE;
 
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_OPEN_FIRST_STRING_CONTACTOR) {
-                /* Precharge contactors have been opened -> start opening first string contactor */
-                /* TODO: Check if precharge contactors have been opened? */
+                /* 预充接触器已断开 -> 开始断开第一个串接触器 */
+                /* TODO: 检查预充接触器是否已断开？ */
                 if ((bms_tablePackValues.invalidStringCurrent[stringNumber] == 0u) &&
                     (MATH_AbsInt32_t(bms_tablePackValues.stringCurrent_mA[stringNumber]) <
                      BS_MAIN_CONTACTORS_MAXIMUM_BREAK_CURRENT_mA)) {
-                    /* Current is below maximum break current -> open first contactor
-                     * Check the mounting direction of the contactors and open the contactor that is mounted in the
-                     * preferred current flow direction. Open the plus contactor first if, there is no contactor
-                     * in preferred direction to the current flow to open available. This may be either because both
-                     * contactors are installed in the same direction or because the contactors are bidirectional.
+                    /* 电流低于最大分断电流 -> 断开第一个接触器
+                     * 检查接触器的安装方向并断开沿首选电流方向安装的接触器。
+                     * 如果没有沿首选电流方向断开可用的接触器，则先断开正极接触器。
+                     * 这可能是因为两个接触器安装在同一方向，或者接触器是双向的。
                      */
                     const BMS_CURRENT_FLOW_STATE_e flowDirection =
                         BMS_GetCurrentFlowDirection(bms_tablePackValues.stringCurrent_mA[stringNumber]);
                     bms_state.contactorToBeOpened = BMS_GetFirstContactorToBeOpened(stringNumber, flowDirection);
                     bms_state.stringToBeOpened    = stringNumber;
-                    /* Open first contactor */
+                    /* 断开第一个接触器 */
                     CONT_OpenContactor(stringNumber, bms_state.contactorToBeOpened);
                     bms_state.timer             = BMS_WAIT_TIME_AFTER_OPENING_STRING_CONTACTOR;
                     bms_state.substate          = BMS_FSM_SUBSTATE_OPEN_SECOND_STRING_CONTACTOR;
                     bms_state.stringOpenTimeout = BMS_STRING_OPEN_TIMEOUT;
                 } else {
-                    /* Current is above maximum contactor break current -> contactor can not be opened */
+                    /* 电流高于接触器最大分断电流 -> 接触器无法断开 */
                     bms_state.timeAboveContactorBreakCurrent_ms += BMS_STATEMACHINE_TASK_CYCLE_CONTEXT_MS;
                     if (bms_state.timeAboveContactorBreakCurrent_ms > BS_MAIN_FUSE_MAXIMUM_TRIGGER_DURATION_ms) {
-                        /* Fuse should have been triggered by now but apparently has not yet. Do not wait any
-                         * longer. Activate ALERT mode and nevertheless start opening the contactors */
+                        /* 熔断器此时本应已触发但显然尚未触发。不再等待。
+                         * 激活 ALERT 模式并仍然开始断开接触器 */
                         DIAG_Handler(DIAG_ID_ALERT_MODE, DIAG_EVENT_NOT_OK, DIAG_SYSTEM, 0u);
                         const BMS_CURRENT_FLOW_STATE_e flowDirection =
                             BMS_GetCurrentFlowDirection(bms_tablePackValues.stringCurrent_mA[stringNumber]);
                         bms_state.contactorToBeOpened = BMS_GetFirstContactorToBeOpened(stringNumber, flowDirection);
                         bms_state.stringToBeOpened    = stringNumber;
-                        /* Open first contactor */
+                        /* 断开第一个接触器 */
                         CONT_OpenContactor(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                         bms_state.timer    = BMS_WAIT_TIME_AFTER_OPENING_STRING_CONTACTOR;
                         bms_state.substate = BMS_FSM_SUBSTATE_OPEN_SECOND_STRING_CONTACTOR;
@@ -1090,68 +1043,64 @@ void BMS_Trigger(void) {
                 }
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_OPEN_SECOND_STRING_CONTACTOR) {
-                /* Check if first contactor has been opened correctly */
+                /* 检查第一个接触器是否已正确断开 */
                 contactorState = CONT_GetContactorState(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                 contactorFeedbackValid =
                     BMS_IsContactorFeedbackValid(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
-                /* If we want to open the contactors because of a feedback
-                 * error for this contactor, the statement will never be true.
-                 * Thus, also continue if a feedback error for this contactor
-                 * is detected as we are not able to get a valid feedback
-                 * information at this point */
+                /* 如果我们想因为该接触器的反馈错误而断开接触器，该语句将永远不会为真。
+                 * 因此，如果检测到该接触器的反馈错误也继续，因为此时我们无法获得
+                 * 有效的反馈信息 */
                 if ((contactorState == CONT_SWITCH_OFF) || (contactorFeedbackValid == false)) {
-                    /* First contactor opened correctly.
-                     * Open second contactor. Pass first opened contactor into function */
+                    /* 第一个接触器已正确断开。
+                     * 断开第二个接触器。将首先断开的接触器传入函数 */
                     bms_state.contactorToBeOpened =
                         BMS_GetSecondContactorToBeOpened(stringNumber, bms_state.contactorToBeOpened);
-                    /* Open second contactor */
+                    /* 断开第二个接触器 */
                     CONT_OpenContactor(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                     bms_state.timer    = BMS_WAIT_TIME_AFTER_OPENING_STRING_CONTACTOR;
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_SECOND_STRING_CONTACTOR;
                 } else {
-                    /* String not opened, re-issue closing request */
+                    /* 串未断开，重新发出断开请求 */
                     CONT_OpenContactor(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                     bms_state.timer = BMS_FSM_SHORTTIME;
-                    /* TODO: add timeout */
+                    /* TODO: 添加超时 */
                 }
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_CHECK_SECOND_STRING_CONTACTOR) {
-                /* Check if second contactor has been opened correctly */
+                /* 检查第二个接触器是否已正确断开 */
                 contactorState = CONT_GetContactorState(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                 contactorFeedbackValid =
                     BMS_IsContactorFeedbackValid(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
-                /* If we want to open the contactors because of a feedback
-                 * error for this contactor, the statement will never be true.
-                 * Thus, also continue if a feedback error for this contactor
-                 * is detected as we are not able to get a valid feedback
-                 * information at this point */
+                /* 如果我们想因为该接触器的反馈错误而断开接触器，该语句将永远不会为真。
+                 * 因此，如果检测到该接触器的反馈错误也继续，因为此时我们无法获得
+                 * 有效的反馈信息 */
                 if ((contactorState == CONT_SWITCH_OFF) || (contactorFeedbackValid == false)) {
-                    /* Opening for this string finished. Reset state variables used for opening */
+                    /* 该串的断开完成。重置用于断开的状态变量 */
                     bms_state.contactorToBeOpened = CONT_UNDEFINED;
                     bms_state.stringToBeOpened    = 0u;
-                    /* String opened. Decrement string counter */
+                    /* 串已断开。递减串计数器 */
                     if (bms_state.numberOfClosedStrings > 0u) {
                         bms_state.numberOfClosedStrings--;
                     }
                     bms_state.closedStrings[stringNumber] = false;
                     if (stringNumber > 0u) {
-                        /* Not all strings opened yet -> open next string */
+                        /* 并非所有串都已断开 -> 断开下一个串 */
                         stringNumber--;
                         bms_state.substate = BMS_FSM_SUBSTATE_OPEN_FIRST_STRING_CONTACTOR;
                         bms_state.timer    = BMS_FSM_SHORTTIME;
                         break;
                     } else {
-                        /* All strings opened -> prepare to leave state BMS_FSM_OPEN_CONTACTORS */
+                        /* 所有串都已断开 -> 准备离开状态 BMS_FSM_OPEN_CONTACTORS */
                         bms_state.substate = BMS_FSM_SUBSTATE_OPEN_STRINGS_EXIT;
                         bms_state.timer    = BMS_FSM_SHORTTIME;
                     }
                     break;
                 } else if (bms_state.stringOpenTimeout == 0u) {
-                    /* String takes too long to open, go to next string */
+                    /* 串断开花费时间过长，转到下一个串 */
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_OPEN_FIRST_STRING_CONTACTOR;
                     break;
                 } else {
-                    /* String not opened, re-issue closing request */
+                    /* 串未断开，重新发出断开请求 */
                     CONT_OpenContactor(bms_state.stringToBeOpened, bms_state.contactorToBeOpened);
                     bms_state.timer = BMS_FSM_SHORTTIME;
                     break;
@@ -1164,13 +1113,13 @@ void BMS_Trigger(void) {
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_OPEN_STRINGS_EXIT) {
                 if (bms_state.nextState == BMS_FSM_STATE_STANDBY) {
-                    /* Opening due to STANDBY request -> switch to BMS_FSM_STANDBY */
+                    /* 由于 STANDBY 请求而断开 -> 切换到 BMS_FSM_STANDBY */
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.state    = BMS_FSM_STATE_STANDBY;
                     bms_state.substate = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else {
-                    /* Opening due to detected error -> switch to BMS_FSM_STATE_ERROR */
+                    /* 由于检测到错误而断开 -> 切换到 BMS_FSM_STATE_ERROR */
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.state    = BMS_FSM_STATE_ERROR;
                     bms_state.substate = BMS_FSM_SUBSTATE_ENTRY;
@@ -1180,7 +1129,7 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************STANDBY**********************************/
+        /****************************待机**********************************/
         case BMS_FSM_STATE_STANDBY:
             BMS_SAVE_LAST_STATES();
             if (bms_state.substate == BMS_FSM_SUBSTATE_ENTRY) {
@@ -1254,7 +1203,7 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************PRECHARGE********************************/
+        /****************************预充********************************/
         case BMS_FSM_STATE_PRECHARGE:
             BMS_SAVE_LAST_STATES();
 
@@ -1277,20 +1226,20 @@ void BMS_Trigger(void) {
                 bms_state.prechargeTryCounter = 0u;
                 bms_state.firstClosedString   = stringNumber;
                 if (bms_state.OscillationTimeout == 0u) {
-                    /* Close MINUS string contactor */
+                    /* 闭合 MINUS 串接触器 */
                     if (CONT_CloseContactor(bms_state.firstClosedString, CONT_MINUS) == STD_OK) {
                         bms_state.stringCloseTimeout = BMS_STRING_CLOSE_TIMEOUT;
                         bms_state.timer              = BMS_WAIT_TIME_AFTER_CLOSING_STRING_CONTACTOR;
                         bms_state.substate           = BMS_FSM_SUBSTATE_PRECHARGE_CLOSE_PRECHARGE;
                     } else {
-                        /* Invalid contactor requested */
+                        /* 请求了无效的接触器 */
                         bms_state.timer     = BMS_FSM_SHORTTIME;
                         bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                         bms_state.nextState = BMS_FSM_STATE_ERROR;
                         bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     }
                 } else if (BMS_IsBatterySystemStateOkay() == STD_NOT_OK) {
-                    /* If precharge re-enter timeout not elapsed, wait (and check errors while waiting) */
+                    /* 如果预充重入超时未过，则等待（并在等待时检查错误） */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
@@ -1299,15 +1248,15 @@ void BMS_Trigger(void) {
                 }
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_PRECHARGE_CLOSE_PRECHARGE) {
-                /* Check if MINUS contactor has been successfully closed */
+                /* 检查 MINUS 接触器是否已成功闭合 */
                 contactorState = CONT_GetContactorState(bms_state.firstClosedString, CONT_MINUS);
                 if (contactorState == CONT_SWITCH_ON) {
                     bms_state.OscillationTimeout = BMS_OSCILLATION_TIMEOUT;
                     contRetVal                   = CONT_ClosePrecharge(bms_state.firstClosedString);
                     bms_state.closedPrechargeContactors[stringNumber] = true;
                     if (contRetVal == STD_OK) {
-                        /* Minus Contactor closed successfully and request to close precharge contactor sent
-                         * -> save timestamp and monitor precharging process */
+                        /* 负极接触器成功闭合且已发送闭合预充接触器的请求
+                         * -> 保存时间戳并监控预充过程 */
                         bms_state.startOfPrecharging = bms_state.currentSystick;
                         bms_state.timer              = BMS_FSM_SHORTTIME;
                         bms_state.substate           = BMS_FSM_SUBSTATE_PRECHARGE_CHECK_PRECHARGE_PROCESS;
@@ -1318,20 +1267,20 @@ void BMS_Trigger(void) {
                         bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     }
                 } else if (bms_state.stringCloseTimeout == 0u) {
-                    /* String takes too long to close */
+                    /* 串闭合花费时间过长 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                 } else {
-                    /* String not closed, re-issue closing request */
+                    /* 串未闭合，重新发出闭合请求 */
                     CONT_CloseContactor(bms_state.firstClosedString, CONT_MINUS);
                     bms_state.timer = BMS_FSM_SHORTTIME;
                 }
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_PRECHARGE_CHECK_PRECHARGE_PROCESS) {
                 if (BMS_IsBatterySystemStateOkay() == STD_NOT_OK) {
-                    /* Error detected: abort and do no proceed with monitoring precharge process */
+                    /* 检测到错误：中止并且不再继续监控预充过程 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
@@ -1339,8 +1288,7 @@ void BMS_Trigger(void) {
                     break;
                 }
                 if (BMS_CheckCanRequests() == BMS_REQ_ID_STANDBY) {
-                    /* Contactor open request received: abort here and do no
-                     * proceed with monitoring precharge process */
+                    /* 接收到接触器断开请求：在此中止并且不再继续监控预充过程 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_STANDBY;
@@ -1349,30 +1297,29 @@ void BMS_Trigger(void) {
                 }
 
                 contactorState = CONT_GetContactorState(bms_state.firstClosedString, CONT_PRECHARGE);
-                /* Monitor precharging */
+                /* 监控预充 */
                 prechargeRetval = BMS_MonitorPrechargeProcess(
                     bms_state.firstClosedString,
                     &bms_tablePackValues,
                     BMS_PRECHARGE_MONITORING_PARAMETERS,
                     BMS_MAXIMUM_PRECHARGE_DURATION_ms);
-                /* Check if precharge contactor is closed and precharge is finished */
+                /* 检查预充接触器是否闭合且预充已完成 */
                 if ((contactorState == CONT_SWITCH_ON) && (prechargeRetval == BMS_PRECHARGING_FINISHED)) {
-                    /* Successfully precharged. Close string PLUS contactor */
+                    /* 预充成功。闭合串 PLUS 接触器 */
                     CONT_CloseContactor(bms_state.firstClosedString, CONT_PLUS);
                     bms_state.stringCloseTimeout = BMS_STRING_CLOSE_TIMEOUT;
                     bms_state.timer              = BMS_WAIT_TIME_AFTER_CLOSING_STRING_CONTACTOR;
                     bms_state.substate           = BMS_FSM_SUBSTATE_CHECK_CLOSE_SECOND_STRING_CONTACTOR_PRECHARGE_STATE;
                     break;
                 } else if (prechargeRetval == BMS_PRECHARGING_ONGOING) {
-                    /* Stay in this state until precharging is successful
-                     * or timeout reached */
+                    /* 保持此状态直到预充成功或达到超时 */
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_PRECHARGE_CHECK_PRECHARGE_PROCESS;
                     break;
                 } else {
-                    /* Precharging failed. Timeout reached. Open precharge contactor. */
+                    /* 预充失败。达到超时。断开预充接触器。 */
                     contRetVal = CONT_OpenPrecharge(bms_state.firstClosedString);
-                    /* Check if retry limit has been reached */
+                    /* 检查是否达到重试限制 */
                     if (bms_state.prechargeTryCounter < (BMS_PRECHARGE_TRIES - 1u)) {
                         bms_state.closedPrechargeContactors[stringNumber] = false;
                         if (contRetVal == STD_OK) {
@@ -1404,14 +1351,14 @@ void BMS_Trigger(void) {
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS_PRECHARGE_CLOSING_STRINGS;
                     break;
                 } else if (bms_state.stringCloseTimeout == 0u) {
-                    /* String takes too long to close */
+                    /* 串闭合花费时间过长 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else {
-                    /* String not closed, re-issue closing request */
+                    /* 串未闭合，重新发出闭合请求 */
                     CONT_CloseContactor(bms_state.firstClosedString, CONT_PLUS);
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS_PRECHARGE_FIRST_STRING;
@@ -1430,7 +1377,7 @@ void BMS_Trigger(void) {
                     break;
                 }
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS_PRECHARGE_CLOSING_STRINGS) {
-                /* Always make one error check after the first string was closed successfully */
+                /* 在首个串成功闭合后始终进行一次错误检查 */
                 if (BMS_IsBatterySystemStateOkay() == STD_NOT_OK) {
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
@@ -1463,14 +1410,14 @@ void BMS_Trigger(void) {
                     bms_state.substate = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else if (bms_state.stringCloseTimeout == 0u) {
-                    /* Precharge contactor takes too long to open */
+                    /* 预充接触器断开花费时间过长 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else {
-                    /* Precharge contactor not opened, re-issue open request */
+                    /* 预充接触器未断开，重新发出断开请求 */
                     CONT_OpenPrecharge(bms_state.firstClosedString);
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS_PRECHARGE_FIRST_STRING;
@@ -1481,7 +1428,7 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************NORMAL**************************************/
+        /****************************正常**************************************/
         case BMS_FSM_STATE_NORMAL:
             BMS_SAVE_LAST_STATES();
 
@@ -1542,8 +1489,7 @@ void BMS_Trigger(void) {
                         (BMS_GetStringVoltageDifference(nextStringNumber, &bms_tablePackValues) <=
                          BMS_NEXT_STRING_VOLTAGE_LIMIT_MV) &&
                         (BMS_GetAverageStringCurrent(&bms_tablePackValues) <= BMS_AVERAGE_STRING_CURRENT_LIMIT_MA)) {
-                        /* Voltage/current conditions suitable to close a further string. Close first string contactor
-                         */
+                        /* 电压/电流条件适合闭合更多串。闭合第一个串接触器 */
                         CONT_CloseContactor(nextStringNumber, CONT_MINUS);
                         bms_state.nextStringClosedTimer = BMS_STRING_CLOSE_TIMEOUT;
                         bms_state.timer                 = BMS_WAIT_TIME_AFTER_CLOSING_STRING_CONTACTOR;
@@ -1558,19 +1504,19 @@ void BMS_Trigger(void) {
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_NORMAL_CLOSE_SECOND_STRING_CONTACTOR) {
                 contactorState = CONT_GetContactorState(nextStringNumber, CONT_MINUS);
                 if (contactorState == CONT_SWITCH_ON) {
-                    /* First string contactor closed. Close second string contactor */
+                    /* 第一个串接触器已闭合。闭合第二个串接触器 */
                     CONT_CloseContactor(nextStringNumber, CONT_PLUS);
                     bms_state.timer    = BMS_WAIT_TIME_AFTER_CLOSING_STRING_CONTACTOR;
                     bms_state.substate = BMS_FSM_SUBSTATE_NORMAL_CLOSE_SECOND_STRING_CONTACTOR;
                 } else if (bms_state.stringCloseTimeout == 0u) {
-                    /* String takes too long to close */
+                    /* 串闭合花费时间过长 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else {
-                    /* String minus contactor has not been closed successfully. Re-trigger closing */
+                    /* 串负极接触器未成功闭合。重新触发闭合 */
                     CONT_CloseContactor(nextStringNumber, CONT_MINUS);
                     bms_state.timer = BMS_FSM_SHORTTIME;
                 }
@@ -1581,11 +1527,11 @@ void BMS_Trigger(void) {
                     bms_state.numberOfClosedStrings++;
                     bms_state.closedStrings[nextStringNumber] = true;
                     bms_state.nextStringClosedTimer           = BMS_WAIT_TIME_BETWEEN_CLOSING_STRINGS;
-                    /* Go to begin of NORMAL case to redo the full procedure with error check and request check */
+                    /* 转到 NORMAL 情况的开头以重新执行带有错误检查和请求检查的完整过程 */
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS;
                     break;
                 } else if (bms_state.stringCloseTimeout == 0u) {
-                    /* String takes too long to close */
+                    /* 串闭合花费时间过长 */
                     bms_state.timer     = BMS_FSM_SHORTTIME;
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_ERROR;
@@ -1604,7 +1550,7 @@ void BMS_Trigger(void) {
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
                     break;
                 } else {
-                    /* String not closed, re-issue closing request */
+                    /* 串未闭合，重新发出闭合请求 */
                     CONT_CloseContactor(nextStringNumber, CONT_PLUS);
                     bms_state.timer = BMS_FSM_SHORTTIME;
                     break;
@@ -1614,53 +1560,51 @@ void BMS_Trigger(void) {
             }
             break;
 
-        /****************************ERROR*************************************/
+        /****************************错误*************************************/
         case BMS_FSM_STATE_ERROR:
             BMS_SAVE_LAST_STATES();
 
             if (bms_state.substate == BMS_FSM_SUBSTATE_ENTRY) {
-                /* Set BMS System state to error */
+                /* 将 BMS 系统状态设置为错误 */
                 DATA_READ_DATA(&systemState);
                 systemState.bmsCanState = BMS_CAN_STATE_ERROR;
                 DATA_WRITE_DATA(&systemState);
-                /* Deactivate balancing */
+                /* 停用均衡 */
                 BAL_SetStateRequest(BAL_STATE_NO_BALANCING_REQUEST);
-                /* Change LED toggle frequency to indicate an error */
+                /* 更改 LED 切换频率以指示错误 */
                 LED_SetToggleTime(LED_ERROR_OPERATION_ON_OFF_TIME_ms);
-                /* Set timer for next open wire check */
+                /* 设置下次开路检查的计时器 */
                 nextOpenWireCheck = bms_state.currentSystick + AFE_ERROR_OPEN_WIRE_PERIOD_ms;
-                /* Switch to next substate */
+                /* 切换到下一个子状态 */
                 bms_state.timer    = BMS_FSM_SHORTTIME;
                 bms_state.substate = BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS;
                 break;
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_CHECK_ERROR_FLAGS) {
                 if (DIAG_IsAnyFatalErrorSet() == true) {
-                    /* we stay already in requested state */
+                    /* 我们已处于请求的状态 */
                     if (nextOpenWireCheck <= bms_state.currentSystick) {
-                        /* Perform open-wire check periodically */
-                        /* MEAS_RequestOpenWireCheck(); */ /*TODO: check with strings */
+                        /* 定期执行开路检查 */
+                        /* MEAS_RequestOpenWireCheck(); */ /*TODO: 检查串 */
                         nextOpenWireCheck = bms_state.currentSystick + AFE_ERROR_OPEN_WIRE_PERIOD_ms;
                     }
                 } else {
-                    /* No error detected anymore - reset fatal error related variables */
+                    /* 不再检测到错误 - 重置致命错误相关变量 */
                     bms_state.minimumActiveDelay_ms  = BMS_NO_ACTIVE_DELAY_TIME_ms;
                     bms_state.minimumActiveDelay_ms  = BMS_NO_ACTIVE_DELAY_TIME_ms;
                     bms_state.transitionToErrorState = false;
-                    /* Check for STANDBY request */
+                    /* 检查 STANDBY 请求 */
                     bms_state.timer    = BMS_FSM_SHORTTIME;
                     bms_state.substate = BMS_FSM_SUBSTATE_CHECK_STATE_REQUESTS;
                     break;
                 }
             } else if (bms_state.substate == BMS_FSM_SUBSTATE_CHECK_STATE_REQUESTS) {
                 if (BMS_CheckCanRequests() == BMS_REQ_ID_STANDBY) {
-                    /* Activate balancing again */
+                    /* 再次激活均衡 */
                     BAL_SetStateRequest(BAL_STATE_ALLOW_BALANCING_REQUEST);
-                    /* Set LED frequency to normal operation as we leave error
-                       state subsequently */
+                    /* 将 LED 频率设置为正常操作，因为我们随后将离开错误状态 */
                     LED_SetToggleTime(LED_NORMAL_OPERATION_ON_OFF_TIME_ms);
 
-                    /* Verify that all contactors are opened and switch to
-                     * STANDBY state afterwards */
+                    /* 验证所有接触器是否已断开，然后切换到 STANDBY 状态 */
                     bms_state.state     = BMS_FSM_STATE_OPEN_CONTACTORS;
                     bms_state.nextState = BMS_FSM_STATE_STANDBY;
                     bms_state.substate  = BMS_FSM_SUBSTATE_ENTRY;
@@ -1671,17 +1615,17 @@ void BMS_Trigger(void) {
                     break;
                 }
             } else {
-                /* invalid state -> this should never be reached */
+                /* 无效状态 -> 这永远不应达到 */
                 FAS_ASSERT(FAS_TRAP);
             }
             break;
         default:
-            /* invalid state */
+            /* 无效状态 */
             FAS_ASSERT(FAS_TRAP);
             break;
-    } /* end switch (bms_state.state) */
+    } /* 结束 switch (bms_state.state) */
 
-    /* Send an asynchronous bms state message if the state or substate changed*/
+    /* 如果状态或子状态发生改变，发送异步 bms 状态消息 */
     if ((bms_state.state != bms_state.lastState) || (bms_state.substate != bms_state.lastSubstate)) {
         CANTX_TransmitBmsState();
     }
@@ -1695,7 +1639,7 @@ extern BMS_CURRENT_FLOW_STATE_e BMS_GetBatterySystemState(void) {
 }
 
 extern BMS_CURRENT_FLOW_STATE_e BMS_GetCurrentFlowDirection(int32_t current_mA) {
-    /* AXIVION Routine Generic-MissingParameterAssert: current_mA: parameter accepts whole range */
+    /* AXIVION 常规 Generic-MissingParameterAssert: current_mA: 参数接受整个范围 */
     BMS_CURRENT_FLOW_STATE_e retVal = BMS_DISCHARGING;
 
     if (BS_POSITIVE_DISCHARGE_CURRENT == true) {
@@ -1744,7 +1688,7 @@ extern bool BMS_IsTransitionToErrorStateActive(void) {
     return bms_state.transitionToErrorState;
 }
 
-/*========== Externalized Static Function Implementations (Unit Test) =======*/
+/*========== 外部化的静态函数实现 (单元测试) =======*/
 #ifdef UNITY_UNIT_TEST
 extern BMS_RETURN_TYPE_e TEST_BMS_CheckStateRequest(BMS_STATE_REQUEST_e statereq) {
     return BMS_CheckStateRequest(statereq);
@@ -1801,3 +1745,4 @@ extern void TEST_BMS_UpdateBatterySystemState(DATA_BLOCK_PACK_VALUES_s *pPackVal
 }
 
 #endif
+

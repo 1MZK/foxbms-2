@@ -63,22 +63,51 @@
 
 /*========== Extern Constant and Variable Definitions =======================*/
 
+/**
+ * @brief SOF配置参数结构体常量定义
+ * 该结构体包含了计算基于电压和温度的电流限制时所需的所有阈值、极限值和降额区间边界。
+ * 使用 const 修饰，确保运行时这些关键安全参数不会被篡改。
+ */
 const SOF_CONFIG_s sof_recommendedCurrent = {
+    /* ==================== 电流限制极值 ==================== */
+    /* 允许的最大持续充电电流（单串），作为充电降额曲线的上限 */
     .maximumChargeCurrent_mA              = SOF_STRING_CURRENT_CONTINUOUS_CHARGE_mA,
+    /* 允许的最大持续放电电流（单串），作为放电降额曲线的上限 */
     .maximumDischargeCurrent_mA           = SOF_STRING_CURRENT_CONTINUOUS_DISCHARGE_mA,
+    /* 跛行回家电流：在极低温放电等极端恶劣条件下，允许的最小维持电流，
+       保证车辆能以极低功率勉强行驶至安全区域，而不是直接抛锚 */
     .limpHomeCurrent_mA                   = SOF_STRING_CURRENT_LIMP_HOME_mA,
+
+    /* ==================== 低温降额区间边界 ==================== */
+    /* 低温放电截止温度：高于此温度时，放电电流不再受低温限制，允许达到最大值 */
     .cutoffLowTemperatureDischarge_ddegC  = SOF_TEMPERATURE_LOW_CUTOFF_DISCHARGE_ddegC,
+    /* 低温放电极限温度：低于此温度时，放电电流降至跛行回家电流（极冷保护） */
     .limitLowTemperatureDischarge_ddegC   = SOF_TEMPERATURE_LOW_LIMIT_DISCHARGE_ddegC,
+    /* 低温充电截止温度：高于此温度时，充电电流不再受低温限制，允许达到最大值 */
     .cutoffLowTemperatureCharge_ddegC     = SOF_TEMPERATURE_LOW_CUTOFF_CHARGE_ddegC,
+    /* 低温充电极限温度：低于此温度时，禁止充电（电流设为0），防止低温析锂造成内短路 */
     .limitLowTemperatureCharge_ddegC      = SOF_TEMPERATURE_LOW_LIMIT_CHARGE_ddegC,
+
+    /* ==================== 高温降额区间边界 ==================== */
+    /* 高温放电截止温度：低于此温度时，放电电流不再受高温限制，允许达到最大值 */
     .cutoffHighTemperatureDischarge_ddegC = SOF_TEMPERATURE_HIGH_CUTOFF_DISCHARGE_ddegC,
+    /* 高温放电极限温度：高于此温度时，禁止放电（电流设为0），防止热失控 */
     .limitHighTemperatureDischarge_ddegC  = SOF_TEMPERATURE_HIGH_LIMIT_DISCHARGE_ddegC,
+    /* 高温充电截止温度：低于此温度时，充电电流不再受高温限制，允许达到最大值 */
     .cutoffHighTemperatureCharge_ddegC    = SOF_TEMPERATURE_HIGH_CUTOFF_CHARGE_ddegC,
+    /* 高温充电极限温度：高于此温度时，禁止充电（电流设为0），防止热失控 */
     .limitHighTemperatureCharge_ddegC     = SOF_TEMPERATURE_HIGH_LIMIT_CHARGE_ddegC,
+
+    /* ==================== 电压降额区间边界 ==================== */
+    /* 充电电压上限极限：当最高单体电压达到此值时，充电电流降为0（满充保护） */
     .limitUpperCellVoltage_mV             = SOF_VOLTAGE_LIMIT_CHARGE_mV,
+    /* 充电电压截止上限：当最高单体电压低于此值时，充电电流允许达到最大值（健康区间） */
     .cutoffUpperCellVoltage_mV            = SOF_VOLTAGE_CUTOFF_CHARGE_mV,
+    /* 放电电压下限极限：当最低单体电压降至此值时，放电电流降为0（过放保护） */
     .limitLowerCellVoltage_mV             = SOF_VOLTAGE_LIMIT_DISCHARGE_mV,
-    .cutoffLowerCellVoltage_mV            = SOF_VOLTAGE_CUTOFF_DISCHARGE_mV};
+    /* 放电电压截止下限：当最低单体电压高于此值时，放电电流允许达到最大值（健康区间） */
+    .cutoffLowerCellVoltage_mV            = SOF_VOLTAGE_CUTOFF_DISCHARGE_mV
+};
 
 /*========== Static Function Prototypes =====================================*/
 
