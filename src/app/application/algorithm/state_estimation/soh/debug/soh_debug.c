@@ -68,20 +68,32 @@
 /*========== Static Function Implementations ================================*/
 
 /*========== Extern Function Implementations ================================*/
+/**
+ * @brief   初始化电池健康状态（SOH）的值
+ * @details 将指定电池串的 SOH 百分比初始化为 0.0%
+ * @param[in,out] pSohValues 指向 SOH 数据库条目的指针，用于存储初始化结果
+ * @param[in] stringNumber 需要初始化的电池串编号
+ */
 extern void SE_InitializeStateOfHealth(DATA_BLOCK_SOH_s *pSohValues, uint8_t stringNumber) {
-    FAS_ASSERT(pSohValues != NULL_PTR);
-    FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
-    pSohValues->averageSoh_perc[stringNumber] = 0.0f;
-    pSohValues->minimumSoh_perc[stringNumber] = 0.0f;
-    pSohValues->maximumSoh_perc[stringNumber] = 0.0f;
+    FAS_ASSERT(pSohValues != NULL_PTR);                                /* 断言检查：确保传入的指针不为空，防止空指针解引用 */
+    FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);                       /* 断言检查：确保串号在有效范围内（小于系统配置的总串数） */
+    
+    pSohValues->averageSoh_perc[stringNumber] = 0.0f;                  /* 将指定串的平均 SOH 初始化为 0.0% */
+    pSohValues->minimumSoh_perc[stringNumber] = 0.0f;                  /* 将指定串的最小 SOH 初始化为 0.0% */
+    pSohValues->maximumSoh_perc[stringNumber] = 0.0f;                  /* 将指定串的最大 SOH 初始化为 0.0% */
 }
 
+/**
+ * @brief   计算电池健康状态（SOH）
+ * @details 当前为存根函数，仅对第 0 串硬编码赋值，未实现真实的 SOH 估算算法
+ * @param[in,out] pSohValues 指向 SOH 数据库条目的指针，用于存储计算结果
+ */
 extern void SE_CalculateStateOfHealth(DATA_BLOCK_SOH_s *pSohValues) {
-    FAS_ASSERT(pSohValues != NULL_PTR);
+    FAS_ASSERT(pSohValues != NULL_PTR);                                /* 断言检查：确保传入的指针不为空，防止空指针解引用 */
 
-    pSohValues->averageSoh_perc[0u] = 50.0f;
-    pSohValues->minimumSoh_perc[0u] = 49.9f;
-    pSohValues->maximumSoh_perc[0u] = 50.1f;
+    pSohValues->averageSoh_perc[0u] = 50.0f;                           /* 硬编码：将第 0 串的平均 SOH 设为 50.0% (占位符逻辑) */
+    pSohValues->minimumSoh_perc[0u] = 49.9f;                           /* 硬编码：将第 0 串的最小 SOH 设为 49.9% (占位符逻辑) */
+    pSohValues->maximumSoh_perc[0u] = 50.1f;                           /* 硬编码：将第 0 串的最大 SOH 设为 50.1% (占位符逻辑) */
 }
 
 /*========== Externalized Static Function Implementations (Unit Test) =======*/

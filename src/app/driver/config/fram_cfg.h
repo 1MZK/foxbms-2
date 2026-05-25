@@ -1,224 +1,215 @@
 /**
  *
- * @copyright &copy; 2010 - 2026, Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.
- * All rights reserved.
+ * @copyright &copy; 2010 - 2026, 弗劳恩霍夫应用研究促进协会
+ * 保留所有权利。
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * 在满足以下条件的前提下，允许以源代码和二进制形式进行重新分发和使用，
+ * 无论是否经过修改：
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * 1. 源代码的重新分发必须保留上述版权声明、此条件列表以及下述免责声明。
  *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ * 2. 二进制形式的重新分发必须在随分发提供的文档和/或其他材料中
+ * 复制上述版权声明、此条件列表以及下述免责声明。
  *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ * 3. 未经特定事先书面许可，版权持有者或其贡献者的姓名不得用于
+ * 认可或推广基于本软件派生的产品。
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 本软件由版权持有者和贡献者“按原样”提供，不提供任何明示或暗示的保证，
+ * 包括但不限于对适销性和特定用途适用性的暗示保证。在任何情况下，
+ * 版权持有者或贡献者均不对任何直接、间接、偶然、特殊、惩罚性或后果性损害
+ * （包括但不限于替代商品或服务的采购、使用、数据或利润的损失，或业务中断）
+ * 承担责任，无论此类损害是基于何种责任理论，无论是合同责任、严格责任还是侵权
+ * （包括疏忽或其他），即使已被告知可能发生此类损害，也是如此。
  *
- * We kindly request you to use one or more of the following phrases to refer to
- * foxBMS in your hardware, software, documentation or advertising materials:
+ * 我们恳请您在硬件、软件、文档或广告材料中使用以下一个或多个短语来指代
+ * foxBMS：
  *
- * - "This product uses parts of foxBMS&reg;"
- * - "This product includes parts of foxBMS&reg;"
- * - "This product is derived from foxBMS&reg;"
+ * - “本产品使用了 foxBMS&reg; 的部分内容”
+ * - “本产品包含 foxBMS&reg; 的部分内容”
+ * - “本产品派生自 foxBMS&reg;”
  *
  */
 
 /**
  * @file    fram_cfg.h
- * @author  foxBMS Team
- * @date    2020-03-05 (date of creation)
- * @updated 2026-04-20 (date of last update)
+ * @author  foxBMS 团队
+ * @date    2020-03-05 (创建日期)
+ * @updated 2026-04-20 (最后更新日期)
  * @version v1.11.0
  * @ingroup DRIVERS
  * @prefix  FRAM
  *
- * @brief   Headers for the configuration for the FRAM module
- * @details TODO
+ * @brief   FRAM 模块配置的头文件
+ * @details 待办
  */
 
-#ifndef FOXBMS__FRAM_CFG_H_
+#ifndef FOXBMS__FRAM_CFG_H_                                           /* 防止重复包含宏：开始 */
 #define FOXBMS__FRAM_CFG_H_
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 
-#include "battery_system_cfg.h"
+#include "battery_system_cfg.h"                                        /* 包含电池系统配置，如 BS_NR_OF_STRINGS */
 
-#include "fstd_types.h"
+#include "fstd_types.h"                                                /* 包含标准类型定义，如 STD_RETURN_TYPE_e */
 
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <math.h>                                                      /* 包含标准数学库 */
+#include <stdbool.h>                                                   /* 包含布尔类型支持 */
+#include <stdint.h>                                                    /* 包含标准整型定义 */
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏和定义 =========================================================*/
 
-/* Header in each entry is made of 4 bytes SPI header + 8 bytes CRC */
-#define FRAM_CRC_HEADER_SIZE (sizeof(uint64_t))
+/* 每个条目的头部由 4 字节 SPI 头 + 8 字节 CRC 组成 */
+#define FRAM_CRC_HEADER_SIZE (sizeof(uint64_t))                        /* 定义 FRAM CRC 头部大小为 64 位(8 字节)的无符号整型大小 */
 
 /**
- * @brief   IDs for projects that use a memory layout
- * @details This enum can be use to differentiate between projects. While an older
- *          version of the same project should be upgradeable, the entry of another
- *          project should be just discarded if a conflict occurs.
+ * @brief   使用内存布局的项目的 ID
+ * @details 此枚举可用于区分不同项目。虽然同一项目的旧版本
+ *          应该是可以升级的，但如果发生冲突，另一个项目的条目
+ *          应该直接被丢弃。
  *
- *          In order for the ID to stay the same it is important that the defined
- *          macros are not changed and that each and every macro has a different
- *          value.
+ *          为了保持 ID 不变，重要的是不要更改定义的宏，并且每个宏
+ *          必须有不同的值。
  */
-typedef uint16_t FRAM_PROJECT_ID;
+typedef uint16_t FRAM_PROJECT_ID;                                      /* 将 FRAM_PROJECT_ID 定义为 uint16_t 类型，用于标识项目 */
 
-/** this is the standard main development branch */
-#define FRAM_PROJECT_ID_FOXBMS_BASELINE ((FRAM_PROJECT_ID)0u)
+/** 这是标准的主开发分支 */
+#define FRAM_PROJECT_ID_FOXBMS_BASELINE ((FRAM_PROJECT_ID)0u)         /* 定义 foxBMS 基线项目的 ID 为 0 */
 
-/** fram block identification numbers */
+/** FRAM 块识别号 (访问返回类型) */
 typedef enum {
-    FRAM_ACCESS_OK,        /* Transaction with FRAM was successful */
-    FRAM_ACCESS_SPI_BUSY,  /* SPI busy, transaction with FRAM could not take place */
-    FRAM_ACCESS_CRC_BUSY,  /* CRC hardware busy, transaction with FRAM could not take place */
-    FRAM_ACCESS_CRC_ERROR, /* Read CRC does not match with CRC computed on read data */
-} FRAM_RETURN_TYPE_e;
+    FRAM_ACCESS_OK,                                                    /* 与 FRAM 的事务成功 */
+    FRAM_ACCESS_SPI_BUSY,                                              /* SPI 忙，无法进行 FRAM 事务 */
+    FRAM_ACCESS_CRC_BUSY,                                              /* CRC 硬件忙，无法进行 FRAM 事务 */
+    FRAM_ACCESS_CRC_ERROR,                                             /* 读取的 CRC 与根据读取数据计算的 CRC 不匹配 */
+} FRAM_RETURN_TYPE_e;                                                  /* 定义 FRAM 访问返回类型的枚举 */
 
-/** configuration struct of database channel (data block) */
+/** 数据库通道(数据块)的配置结构体 */
 typedef struct {
-    void *blockptr;
-    uint32_t datalength;
-    uint32_t address;
-} FRAM_BASE_HEADER_s;
+    void *blockptr;                                                    /* 指向数据块的指针 */
+    uint32_t datalength;                                               /* 数据块的长度 */
+    uint32_t address;                                                  /* 数据块在 FRAM 中的地址 */
+} FRAM_BASE_HEADER_s;                                                  /* 定义 FRAM 基础头结构体 */
 
-/** fram block identification numbers */
+/** FRAM 块识别号 (数据块 ID) */
 typedef enum {
-    FRAM_BLOCK_ID_VERSION,
-    FRAM_BLOCK_ID_SOC,
-    FRAM_BLOCK_ID_SBC_INIT_STATE,
-    FRAM_BLOCK_ID_DEEP_DISCHARGE_FLAG,
-    FRAM_BLOCK_ID_SOE,
-    FRAM_BLOCK_ID_SYS_MON_RECORD,
-    FRAM_BLOCK_ID_INSULATION_FLAG,
-    FRAM_BLOCK_MAX, /**< DO NOT CHANGE, MUST BE THE LAST ENTRY */
-} FRAM_BLOCK_ID_e;
+    FRAM_BLOCK_ID_VERSION,                                             /* 版本信息块 ID */
+    FRAM_BLOCK_ID_SOC,                                                 /* SOC(荷电状态)数据块 ID */
+    FRAM_BLOCK_ID_SBC_INIT_STATE,                                      /* SBC(系统基础芯片)初始化状态块 ID */
+    FRAM_BLOCK_ID_DEEP_DISCHARGE_FLAG,                                 /* 深度放电标志块 ID */
+    FRAM_BLOCK_ID_SOE,                                                 /* SOE(能量状态)数据块 ID */
+    FRAM_BLOCK_ID_SYS_MON_RECORD,                                      /* 系统监控记录块 ID */
+    FRAM_BLOCK_ID_INSULATION_FLAG,                                     /* 绝缘接地故障标志块 ID */
+    FRAM_BLOCK_MAX,                                                    /**< 不要更改，必须是最后一个条目 */ /* 用于循环遍历的最大值，必须放在最后 */
+} FRAM_BLOCK_ID_e;                                                     /* 定义 FRAM 数据块 ID 的枚举 */
 
-FAS_STATIC_ASSERT(((uint32_t)FRAM_BLOCK_MAX < (uint32_t)UINT8_MAX), "Looping over 'FRAM_BLOCK_MAX' assumes 'uint8_t'.");
+FAS_STATIC_ASSERT(((uint32_t)FRAM_BLOCK_MAX < (uint32_t)UINT8_MAX), "Looping over 'FRAM_BLOCK_MAX' assumes 'uint8_t'."); /* 静态断言：确保 FRAM_BLOCK_MAX 小于 255，因为遍历时使用 uint8_t */
 
 /**
- * @brief   Stores the version of the memory layout of the FRAM
- * @details This struct stores with which memory-layout version the FRAM has
- *          been written. This allows the BMS to recognize an incompatible
- *          memory layout.
+ * @brief   存储 FRAM 内存布局的版本
+ * @details 此结构体存储 FRAM 是用哪个内存布局版本写入的。
+ *          这允许 BMS 识别不兼容的内存布局。
  */
 typedef struct {
-    FRAM_PROJECT_ID project; /*!< an identifier for the project, it is not
-                                    intended to migrate between different projects */
-    uint8_t major;           /*!< major release version */
-    uint8_t minor;           /*!< minor release version */
-    uint8_t patch;           /*!< patch release version */
-} FRAM_VERSION_s;
+    FRAM_PROJECT_ID project;                                           /*!< 项目的标识符，不打算在不同项目之间迁移 */
+    uint8_t major;                                                      /*!< 主发布版本 */
+    uint8_t minor;                                                      /*!< 次发布版本 */
+    uint8_t patch;                                                      /*!< 补丁版本 */
+} FRAM_VERSION_s;                                                      /* 定义 FRAM 版本信息结构体 */
 
-/** struct for the FRAM entry of the SBC driver */
+/** SBC 驱动的 FRAM 条目的结构体 */
 typedef struct {
-    uint8_t phase;
-    STD_RETURN_TYPE_e finState;
-} FRAM_SBC_INIT_s;
+    uint8_t phase;                                                      /* 阶段 */
+    STD_RETURN_TYPE_e finState;                                         /* 最终状态 */
+} FRAM_SBC_INIT_s;                                                     /* 定义 FRAM 中 SBC 初始化状态的结构体 */
 
 /**
- * state of charge (SOC). Since SOC is voltage dependent, three different
- * values are used, min, max and average. SOC defined as a float_t number between
- * 0.0f and 100.0f (0% and 100%)
+ * 荷电状态 (SOC)。由于 SOC 依赖于电压，因此使用三个不同的
+ * 值：最小值、最大值和平均值。SOC 定义为 0.0f 和 100.0f 之间的
+ * float_t 数字 (0% 和 100%)
  */
 typedef struct {
-    float_t minimumSoc_perc[BS_NR_OF_STRINGS];        /*!< minimum SOC */
-    float_t maximumSoc_perc[BS_NR_OF_STRINGS];        /*!< maximum SOC */
-    float_t averageSoc_perc[BS_NR_OF_STRINGS];        /*!< average SOC */
-    float_t chargeThroughput_As[BS_NR_OF_STRINGS];    /*!<  Charge throughput */
-    float_t dischargeThroughput_As[BS_NR_OF_STRINGS]; /*!< Discharge throughput */
-} FRAM_SOC_s;
+    float_t minimumSoc_perc[BS_NR_OF_STRINGS];                         /*!< 最小 SOC */
+    float_t maximumSoc_perc[BS_NR_OF_STRINGS];                         /*!< 最大 SOC */
+    float_t averageSoc_perc[BS_NR_OF_STRINGS];                         /*!< 平均 SOC */
+    float_t chargeThroughput_As[BS_NR_OF_STRINGS];                     /*!<  充电吞吐量(安培秒) */
+    float_t dischargeThroughput_As[BS_NR_OF_STRINGS];                  /*!< 放电吞吐量(安培秒) */
+} FRAM_SOC_s;                                                          /* 定义存储在 FRAM 中的 SOC 数据结构体 */
 
 /**
- * state of energy (SOE). Since SOE is voltage dependent, three different
- * values are used, min, max and average. SOE defined as a float_t number between
- * 0.0f and 100.0f (0% and 100%)
+ * 能量状态 (SOE)。由于 SOE 依赖于电压，因此使用三个不同的
+ * 值：最小值、最大值和平均值。SOE 定义为 0.0f 和 100.0f 之间的
+ * float_t 数字 (0% 和 100%)
  */
 typedef struct {
-    float_t minimumSoe_perc[BS_NR_OF_STRINGS];              /*!< minimum SOE */
-    float_t maximumSoe_perc[BS_NR_OF_STRINGS];              /*!< maximum SOE */
-    float_t averageSoe_perc[BS_NR_OF_STRINGS];              /*!< average SOE */
-    float_t chargeEnergyThroughput_Wh[BS_NR_OF_STRINGS];    /*!< inflow of energy */
-    float_t dischargeEnergyThroughput_Wh[BS_NR_OF_STRINGS]; /*!< outflow of energy */
-} FRAM_SOE_s;
+    float_t minimumSoe_perc[BS_NR_OF_STRINGS];                         /*!< 最小 SOE */
+    float_t maximumSoe_perc[BS_NR_OF_STRINGS];                         /*!< 最大 SOE */
+    float_t averageSoe_perc[BS_NR_OF_STRINGS];                         /*!< 平均 SOE */
+    float_t chargeEnergyThroughput_Wh[BS_NR_OF_STRINGS];               /*!< 流入的能量(充电吞吐量，瓦时) */
+    float_t dischargeEnergyThroughput_Wh[BS_NR_OF_STRINGS];            /*!< 流出的能量(放电吞吐量，瓦时) */
+} FRAM_SOE_s;                                                          /* 定义存储在 FRAM 中的 SOE 数据结构体 */
 
-/** flag to indicate if a deep-discharge in a string has been detected */
+/** 用于指示是否检测到某串发生深度放电的标志 */
 typedef struct {
-    bool deepDischargeFlag[BS_NR_OF_STRINGS]; /*!< false (0): no error, true (1): deep-discharge detected */
-} FRAM_DEEP_DISCHARGE_FLAG_s;
+    bool deepDischargeFlag[BS_NR_OF_STRINGS];                          /*!< false (0): 无错误，true (1): 检测到深度放电 */
+} FRAM_DEEP_DISCHARGE_FLAG_s;                                          /* 定义存储在 FRAM 中的深度放电标志结构体 */
 
-/** flag to indicate if insulation ground error has been detected */
+/** 用于指示是否检测到绝缘接地故障的标志 */
 typedef struct {
-    bool groundErrorDetected; /*!< false (0): no error, true (1): ground error detected */
-} FRAM_INSULATION_FLAG_s;
+    bool groundErrorDetected;                                          /*!< false (0): 无错误，true (1): 检测到接地故障 */
+} FRAM_INSULATION_FLAG_s;                                              /* 定义存储在 FRAM 中的绝缘故障标志结构体 */
 
 /**
- * @brief struct that stores for each task the last violation of timing
+ * @brief 存储每个任务最后一次时序违规的结构体
  */
 typedef struct {
-    /** convenience flag that is set as long as any timing issues are recorded */
-    bool anyTimingIssueOccurred;
-    /** duration that has been recorded when the last violation of timings occurred */
-    uint32_t taskEngineViolatingDuration;
-    /** timestamp that has been recorded when the violating execution of the task has been entered */
-    uint32_t taskEngineEnterTimestamp;
-    /** duration that has been recorded when the last violation of timings occurred */
-    uint32_t task1msViolatingDuration;
-    /** timestamp that has been recorded when the violating execution of the task has been entered */
-    uint32_t task1msEnterTimestamp;
-    /** duration that has been recorded when the last violation of timings occurred */
-    uint32_t task10msViolatingDuration;
-    /** timestamp that has been recorded when the violating execution of the task has been entered */
-    uint32_t task10msEnterTimestamp;
-    /** duration that has been recorded when the last violation of timings occurred */
-    uint32_t task100msViolatingDuration;
-    /** timestamp that has been recorded when the violating execution of the task has been entered */
-    uint32_t task100msEnterTimestamp;
-    /** duration that has been recorded when the last violation of timings occurred */
-    uint32_t task100msAlgorithmViolatingDuration;
-    /** timestamp that has been recorded when the violating execution of the task has been entered */
-    uint32_t task100msAlgorithmEnterTimestamp;
-} FRAM_SYS_MON_RECORD_s;
+    /** 只要记录了任何时序问题就会设置的便利标志 */
+    bool anyTimingIssueOccurred;                                       /* 任何时序问题发生的标志 */
+    /** 发生最后一次时序违规时记录的持续时间 */
+    uint32_t taskEngineViolatingDuration;                              /* 引擎任务违规持续时间 */
+    /** 进入违规执行任务时记录的时间戳 */
+    uint32_t taskEngineEnterTimestamp;                                 /* 引擎任务进入时间戳 */
+    /** 发生最后一次时序违规时记录的持续时间 */
+    uint32_t task1msViolatingDuration;                                 /* 1毫秒任务违规持续时间 */
+    /** 进入违规执行任务时记录的时间戳 */
+    uint32_t task1msEnterTimestamp;                                    /* 1毫秒任务进入时间戳 */
+    /** 发生最后一次时序违规时记录的持续时间 */
+    uint32_t task10msViolatingDuration;                                /* 10毫秒任务违规持续时间 */
+    /** 进入违规执行任务时记录的时间戳 */
+    uint32_t task10msEnterTimestamp;                                   /* 10毫秒任务进入时间戳 */
+    /** 发生最后一次时序违规时记录的持续时间 */
+    uint32_t task100msViolatingDuration;                               /* 100毫秒任务违规持续时间 */
+    /** 进入违规执行任务时记录的时间戳 */
+    uint32_t task100msEnterTimestamp;                                  /* 100毫秒任务进入时间戳 */
+    /** 发生最后一次时序违规时记录的持续时间 */
+    uint32_t task100msAlgorithmViolatingDuration;                      /* 100毫秒算法任务违规持续时间 */
+    /** 进入违规执行任务时记录的时间戳 */
+    uint32_t task100msAlgorithmEnterTimestamp;                         /* 100毫秒算法任务进入时间戳 */
+} FRAM_SYS_MON_RECORD_s;                                              /* 定义存储在 FRAM 中的系统监控记录结构体 */
 
-/*========== Extern Constant and Variable Declarations ======================*/
+/*========== 外部常量和变量声明 ======================*/
 
-extern FRAM_BASE_HEADER_s fram_databaseHeader[FRAM_BLOCK_MAX];
+extern FRAM_BASE_HEADER_s fram_databaseHeader[FRAM_BLOCK_MAX];         /* 声明外部变量：FRAM 数据库头部数组，用于管理各数据块在FRAM中的地址和长度 */
 
 /**
- * Variables to be stored in FRAM
+ * 要存储在 FRAM 中的变量
  */
 /**@{*/
-extern FRAM_VERSION_s fram_version;
-extern FRAM_SOC_s fram_soc;
-extern FRAM_SOE_s fram_soe;
-extern FRAM_SBC_INIT_s fram_sbcInit;
-extern FRAM_DEEP_DISCHARGE_FLAG_s fram_deepDischargeFlags;
-extern FRAM_SYS_MON_RECORD_s fram_sysMonViolationRecord;
-extern FRAM_INSULATION_FLAG_s fram_insulationFlags;
+extern FRAM_VERSION_s fram_version;                                    /* 声明外部变量：FRAM 版本信息实例 */
+extern FRAM_SOC_s fram_soc;                                            /* 声明外部变量：FRAM 中的 SOC 数据实例 */
+extern FRAM_SOE_s fram_soe;                                            /* 声明外部变量：FRAM 中的 SOE 数据实例 */
+extern FRAM_SBC_INIT_s fram_sbcInit;                                   /* 声明外部变量：FRAM 中的 SBC 初始化状态实例 */
+extern FRAM_DEEP_DISCHARGE_FLAG_s fram_deepDischargeFlags;             /* 声明外部变量：FRAM 中的深度放电标志实例 */
+extern FRAM_SYS_MON_RECORD_s fram_sysMonViolationRecord;               /* 声明外部变量：FRAM 中的系统监控违规记录实例 */
+extern FRAM_INSULATION_FLAG_s fram_insulationFlags;                    /* 声明外部变量：FRAM 中的绝缘故障标志实例 */
 /**@}*/
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 =====================================*/
+/* 外部函数原型（本文件无） */
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
-#ifdef UNITY_UNIT_TEST
-#endif
+/*========== 外部化的静态函数原型 (单元测试) ===========*/
+#ifdef UNITY_UNIT_TEST                                                  /* 如果定义了 UNITY_UNIT_TEST 宏，用于单元测试 */
+#endif                                                                  /* 本文件无导出的测试函数原型 */
 
-#endif /* FOXBMS__FRAM_CFG_H_ */
+#endif /* FOXBMS__FRAM_CFG_H_ */                                       /* 防止重复包含宏：结束 */
