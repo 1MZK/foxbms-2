@@ -1,25 +1,18 @@
 /*
  * FreeRTOS+TCP V4.3.3
- * Copyright (C) 2022 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * 版权所有 (C) 2022 Amazon.com, Inc. 或其附属公司。保留所有权利。
  *
  * SPDX-License-Identifier: MIT
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
+ * 特此免费授予获得本软件及相关文档文件（“软件”）副本的任何人不受限制地处理本软件的权利，
+ * 包括但不限于使用、复制、修改、合并、发布、分发、再授权和/或销售本软件副本的权利，
+ * 以及允许向其提供本软件的人员在遵守以下条件的前提下行使上述权利：
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * 上述版权声明和本许可声明应包含在本软件的所有副本或主要部分中。
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 本软件按“原样”提供，不作任何明示或暗示的保证，包括但不限于适销性、特定用途适用性和
+ * 非侵权性的保证。在任何情况下，作者或版权持有人均不对因本软件或本软件的使用或其他交易
+ * 引起的任何索赔、损害或其他责任承担责任，无论是在合同诉讼、侵权行为还是其他方面。
  *
  * http://aws.amazon.com/freertos
  * http://www.FreeRTOS.org
@@ -27,21 +20,21 @@
 
 /**
  * @file FreeRTOS_IP.c
- * @brief Implements the basic functionality for the FreeRTOS+TCP network stack.
+ * @brief 实现 FreeRTOS+TCP 网络协议栈的基本功能。
  */
 
-/* Standard includes. */
+/* 标准库头文件包含。 */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-/* FreeRTOS includes. */
+/* FreeRTOS 内核头文件包含。 */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
 
-/* FreeRTOS+TCP includes. */
+/* FreeRTOS+TCP 协议栈头文件包含。 */
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_ICMP.h"
 #include "FreeRTOS_IP_Timers.h"
@@ -60,7 +53,7 @@
 #include "FreeRTOS_DNS.h"
 #include "FreeRTOS_Routing.h"
 
-/** @brief Time delay between repeated attempts to initialise the network hardware. */
+/** @brief 尝试初始化网络硬件的重试延迟时间。 */
 #ifndef ipINITIALISATION_RETRY_DELAY
     #define ipINITIALISATION_RETRY_DELAY    ( pdMS_TO_TICKS( 3000U ) )
 #endif
@@ -69,49 +62,48 @@
     #include "tcp_mem_stats.h"
 #endif
 
-/** @brief Maximum time to wait for an ARP resolution while holding a packet. */
+/** @brief 在持有数据包时，等待 ARP 解析的最大延迟时间。 */
 #ifndef ipARP_RESOLUTION_MAX_DELAY
     #define ipARP_RESOLUTION_MAX_DELAY    ( pdMS_TO_TICKS( 2000U ) )
 #endif
 
-/** @brief Maximum time to wait for a ND resolution while holding a packet. */
+/** @brief 在持有数据包时，等待 ND（邻居发现）解析的最大延迟时间。 */
 #ifndef ipND_RESOLUTION_MAX_DELAY
     #define ipND_RESOLUTION_MAX_DELAY    ( pdMS_TO_TICKS( 2000U ) )
 #endif
 
-/** @brief Defines how often the ARP resolution timer callback function is executed.  The time is
- * shorter in the Windows simulator as simulated time is not real time. */
+/** @brief 定义 ARP 解析定时器回调函数的执行频率。
+ * 在 Windows 模拟器中时间较短，因为模拟时间不是真实时间。 */
 #ifndef ipARP_TIMER_PERIOD_MS
     #ifdef _WINDOWS_
-        #define ipARP_TIMER_PERIOD_MS    ( 500U ) /* For windows simulator builds. */
+        #define ipARP_TIMER_PERIOD_MS    ( 500U ) /* 用于 Windows 模拟器构建。 */
     #else
         #define ipARP_TIMER_PERIOD_MS    ( 10000U )
     #endif
 #endif
 
-/** @brief Defines how often the ND resolution timer callback function is executed.  The time is
- * shorter in the Windows simulator as simulated time is not real time. */
+/** @brief 定义 ND 解析定时器回调函数的执行频率。
+ * 在 Windows 模拟器中时间较短，因为模拟时间不是真实时间。 */
 #ifndef ipND_TIMER_PERIOD_MS
     #ifdef _WINDOWS_
-        #define ipND_TIMER_PERIOD_MS    ( 500U ) /* For windows simulator builds. */
+        #define ipND_TIMER_PERIOD_MS    ( 500U ) /* 用于 Windows 模拟器构建。 */
     #else
         #define ipND_TIMER_PERIOD_MS    ( 10000U )
     #endif
 #endif
 
 #if ( ( ipconfigUSE_TCP == 1 ) && !defined( ipTCP_TIMER_PERIOD_MS ) )
-    /** @brief When initialising the TCP timer, give it an initial time-out of 1 second. */
+    /** @brief 初始化 TCP 定时器时，给它 1 秒的初始超时时间。 */
     #define ipTCP_TIMER_PERIOD_MS    ( 1000U )
 #endif
 
 #ifndef iptraceIP_TASK_STARTING
-    #define iptraceIP_TASK_STARTING()    do {} while( ipFALSE_BOOL ) /**< Empty definition in case iptraceIP_TASK_STARTING is not defined. */
+    #define iptraceIP_TASK_STARTING()    do {} while( ipFALSE_BOOL ) /**< 如果未定义 iptraceIP_TASK_STARTING，则提供空定义。 */
 #endif
 
-/** @brief The frame type field in the Ethernet header must have a value greater than 0x0600.
- * If the configuration option ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES is enabled, the stack
- * will discard packets with a frame type value less than or equal to 0x0600.
- * However, if this option is disabled, the stack will continue to process these packets. */
+/** @brief 以太网头中的帧类型字段值必须大于 0x0600。
+ * 如果配置选项 ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES 被启用，协议栈将丢弃帧类型值
+ * 小于或等于 0x0600 的数据包。但如果禁用此选项，协议栈将继续处理这些数据包。 */
 #define ipIS_ETHERNET_FRAME_TYPE_INVALID( usFrameType )    ( ( usFrameType ) <= 0x0600U )
 
 static void prvCallDHCP_RA_Handler( NetworkEndPoint_t * pxEndPoint );
@@ -122,12 +114,12 @@ static void prvIPTask_CheckPendingEvents( void );
 
 /*-----------------------------------------------------------*/
 
-/** @brief The pointer to buffer with packet waiting for ARP resolution. */
+/** @brief 指向等待 ARP 解析的数据包缓冲区的指针。 */
 #if ipconfigIS_ENABLED( ipconfigUSE_IPv4 )
     NetworkBufferDescriptor_t * pxARPWaitingNetworkBuffer = NULL;
 #endif
 
-/** @brief The pointer to buffer with packet waiting for ND resolution. */
+/** @brief 指向等待 ND 解析的数据包缓冲区的指针。 */
 #if ipconfigIS_ENABLED( ipconfigUSE_IPv6 )
     NetworkBufferDescriptor_t * pxNDWaitingNetworkBuffer = NULL;
 #endif
@@ -137,45 +129,40 @@ static void prvIPTask_CheckPendingEvents( void );
 static void prvProcessIPEventsAndTimers( void );
 
 /*
- * The main TCP/IP stack processing task.  This task receives commands/events
- * from the network hardware drivers and tasks that are using sockets.  It also
- * maintains a set of protocol timers.
+ * 主 TCP/IP 协议栈处理任务。此任务接收来自网络硬件驱动程序和使用套接字的任务的
+ * 命令/事件。它还维护一组协议定时器。
  */
 static void prvIPTask( void * pvParameters );
 
 /*
- * Called when new data is available from the network interface.
+ * 当网络接口有新数据可用时调用。
  */
 static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetworkBuffer );
 
 #if ( ipconfigPROCESS_CUSTOM_ETHERNET_FRAMES != 0 )
 
 /*
- * The stack will call this user hook for all Ethernet frames that it
- * does not support, i.e. other than IPv4, IPv6 and ARP ( for the moment )
- * If this hook returns eReleaseBuffer or eProcessBuffer, the stack will
- * release and reuse the network buffer.  If this hook returns
- * eReturnEthernetFrame, that means user code has reused the network buffer
- * to generate a response and the stack will send that response out.
- * If this hook returns eFrameConsumed, the user code has ownership of the
- * network buffer and has to release it when it's done.
+ * 协议栈将为它不支持的以太网帧调用此用户钩子函数，即除 IPv4、IPv6 和 ARP 之外的帧（目前）。
+ * 如果此钩子返回 eReleaseBuffer 或 eProcessBuffer，协议栈将释放并重用该网络缓冲区。
+ * 如果此钩子返回 eReturnEthernetFrame，则表示用户代码已重用该网络缓冲区来生成响应，
+ * 协议栈将发送该响应。
+ * 如果此钩子返回 eFrameConsumed，则用户代码拥有该网络缓冲区的所有权，并在完成后负责释放它。
  */
     extern eFrameProcessingResult_t eApplicationProcessCustomFrameHook( NetworkBufferDescriptor_t * const pxNetworkBuffer );
 #endif /* ( ipconfigPROCESS_CUSTOM_ETHERNET_FRAMES != 0 ) */
 
 /*
- * Process incoming IP packets.
+ * 处理传入的 IP 数据包。
  */
 static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacket,
                                                     NetworkBufferDescriptor_t * const pxNetworkBuffer );
 
 /*
- * The network card driver has received a packet.  In the case that it is part
- * of a linked packet chain, walk through it to handle every message.
+ * 网卡驱动程序已接收到一个数据包。如果它是链接数据包链的一部分，则遍历它以处理每一条消息。
  */
 static void prvHandleEthernetPacket( NetworkBufferDescriptor_t * pxBuffer );
 
-/* Handle the 'eNetworkTxEvent': forward a packet from an application to the NIC. */
+/* 处理 'eNetworkTxEvent'：将数据包从应用程序转发到网卡。 */
 static void prvForwardTxPacket( NetworkBufferDescriptor_t * pxNetworkBuffer,
                                 BaseType_t xReleaseAfterSend );
 
@@ -183,65 +170,57 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
 
 /*-----------------------------------------------------------*/
 
-/** @brief The queue used to pass events into the IP-task for processing. */
+/** @brief 用于将事件传递给 IP 任务进行处理的队列。 */
 QueueHandle_t xNetworkEventQueue = NULL;
 
-/** @brief The IP packet ID. */
+/** @brief IP 数据包标识符。 */
 uint16_t usPacketIdentifier = 0U;
 
-/** @brief For convenience, a MAC address of all 0xffs is defined const for quick
- * reference. */
+/** @brief 为方便起见，定义了一个全为 0xff 的 MAC 地址常量，以便快速引用。 */
 const MACAddress_t xBroadcastMACAddress = { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } };
 
-/** @brief Used to ensure network down events cannot be missed when they cannot be
- * posted to the network event queue because the network event queue is already
- * full. */
+/** @brief 用于确保在网络事件队列已满而无法发布网络断开事件时，不会遗漏这些事件。 */
 static volatile BaseType_t xNetworkDownEventPending = pdFALSE;
 
-/** @brief Stores the handle of the task that handles the stack.  The handle is used
- * (indirectly) by some utility function to determine if the utility function is
- * being called by a task (in which case it is ok to block) or by the IP task
- * itself (in which case it is not ok to block). */
-
+/** @brief 存储处理协议栈的任务句柄。该句柄被某些实用函数（间接）使用，
+ * 以确定实用函数是由任务调用的（这种情况下可以阻塞）还是由 IP 任务本身调用的（这种情况下不能阻塞）。 */
 static TaskHandle_t xIPTaskHandle = NULL;
 
-/** @brief Set to pdTRUE when the IP task is ready to start processing packets. */
+/** @brief 当 IP 任务准备好开始处理数据包时，设置为 pdTRUE。 */
 static BaseType_t xIPTaskInitialised = pdFALSE;
 
 #if ( ipconfigCHECK_IP_QUEUE_SPACE != 0 )
-    /** @brief Keep track of the lowest amount of space in 'xNetworkEventQueue'. */
+    /** @brief 跟踪 'xNetworkEventQueue' 中的最小剩余空间。 */
     static UBaseType_t uxQueueMinimumSpace = ipconfigEVENT_QUEUE_LENGTH;
 #endif
 
 /*-----------------------------------------------------------*/
 
-/* Coverity wants to make pvParameters const, which would make it incompatible. Leave the
- * function signature as is. */
+/* Coverity 希望将 pvParameters 设为 const，但这会使其不兼容。保持函数签名不变。 */
 
 /**
- * @brief The IP task handles all requests from the user application and the
- *        network interface. It receives messages through a FreeRTOS queue called
- *        'xNetworkEventQueue'. prvIPTask() is the only task which has access to
- *        the data of the IP-stack, and so it has no need of using mutexes.
+ * @brief IP 任务处理来自用户应用程序和网络接口的所有请求。
+ *        它通过一个名为 'xNetworkEventQueue' 的 FreeRTOS 队列接收消息。
+ *        prvIPTask() 是唯一有权访问 IP 协议栈数据的任务，因此它不需要使用互斥锁。
  *
- * @param[in] pvParameters Not used.
+ * @param[in] pvParameters 未使用。
  */
 
-/** @brief Stores interface structures. */
+/** @brief 存储接口结构。 */
 
-/* MISRA Ref 8.13.1 [Not decorating a pointer to const parameter with const] */
-/* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-813 */
+/* MISRA 参考 8.13.1 [未使用 const 修饰指向 const 参数的指针] */
+/* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-813 */
 /* coverity[misra_c_2012_rule_8_13_violation] */
 static void prvIPTask( void * pvParameters )
 {
-    /* Just to prevent compiler warnings about unused parameters. */
+    /* 仅为了防止编译器警告未使用的参数。 */
     ( void ) pvParameters;
 
     prvIPTask_Initialise();
 
-    FreeRTOS_debug_printf( ( "prvIPTask started\n" ) );
+    FreeRTOS_debug_printf( ( "prvIPTask 已启动\n" ) );
 
-    /* Loop, processing IP events. */
+    /* 循环，处理 IP 事件。 */
     while( ipFOREVER() == pdTRUE )
     {
         prvProcessIPEventsAndTimers();
@@ -250,7 +229,7 @@ static void prvIPTask( void * pvParameters )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Process the events sent to the IP task and process the timers.
+ * @brief 处理发送给 IP 任务的事件并处理定时器。
  */
 static void prvProcessIPEventsAndTimers( void )
 {
@@ -261,16 +240,14 @@ static void prvProcessIPEventsAndTimers( void )
 
     ipconfigWATCHDOG_TIMER();
 
-    /* Check the Resolution, DHCP and TCP timers to see if there is any periodic
-     * or timeout processing to perform. */
+    /* 检查解析、DHCP 和 TCP 定时器，看是否有需要执行的周期性或超时处理。 */
     vCheckNetworkTimers();
 
-    /* Calculate the acceptable maximum sleep time. */
+    /* 计算可接受的最大睡眠时间。 */
     xNextIPSleep = xCalculateSleepTime();
 
-    /* Wait until there is something to do. If the following call exits
-     * due to a time out rather than a message being received, set a
-     * 'NoEvent' value. */
+    /* 等待直到有事情可做。如果以下调用是由于超时而不是接收到消息而退出，
+     * 则设置一个 'NoEvent' 值。 */
     if( xQueueReceive( xNetworkEventQueue, ( void * ) &xReceivedEvent, xNextIPSleep ) == pdFALSE )
     {
         xReceivedEvent.eEventType = eNoEvent;
@@ -297,34 +274,32 @@ static void prvProcessIPEventsAndTimers( void )
     switch( xReceivedEvent.eEventType )
     {
         case eNetworkDownEvent:
-            /* Attempt to establish a connection. */
+            /* 尝试建立连接。 */
             prvProcessNetworkDownEvent( ( ( NetworkInterface_t * ) xReceivedEvent.pvData ) );
             break;
 
         case eNetworkRxEvent:
 
-            /* The network hardware driver has received a new packet.  A
-             * pointer to the received buffer is located in the pvData member
-             * of the received event structure. */
+            /* 网络硬件驱动程序已接收到一个新数据包。指向接收缓冲区的指针
+             * 位于接收到的事件结构的 pvData 成员中。 */
             prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
             break;
 
         case eNetworkTxEvent:
 
-            /* Send a network packet. The ownership will  be transferred to
-             * the driver, which will release it after delivery. */
+            /* 发送一个网络数据包。所有权将转移给驱动程序，驱动程序在交付后将释放它。 */
             prvForwardTxPacket( ( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData ), pdTRUE );
             break;
 
         case eARPTimerEvent:
-            /* The ARP Resolution timer has expired, process the cache. */
+            /* ARP 解析定时器已过期，处理缓存。 */
             #if ipconfigIS_ENABLED( ipconfigUSE_IPv4 )
                 vARPAgeCache();
             #endif /* ( ipconfigUSE_IPv4 != 0 ) */
             break;
 
         case eNDTimerEvent:
-            /* The ND Resolution timer has expired, process the cache. */
+            /* ND 解析定时器已过期，处理缓存。 */
             #if ipconfigIS_ENABLED( ipconfigUSE_IPv6 )
                 vNDAgeCache();
             #endif /* ( ipconfigUSE_IPv6 != 0 ) */
@@ -332,11 +307,9 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eSocketBindEvent:
 
-            /* FreeRTOS_bind (a user API) wants the IP-task to bind a socket
-             * to a port. The port number is communicated in the socket field
-             * usLocalPort. vSocketBind() will actually bind the socket and the
-             * API will unblock as soon as the eSOCKET_BOUND event is
-             * triggered. */
+            /* FreeRTOS_bind（一个用户 API）希望 IP 任务将套接字绑定到某个端口。
+             * 端口号在套接字字段 usLocalPort 中传递。vSocketBind() 将实际绑定套接字，
+             * 并且一旦触发 eSOCKET_BOUND 事件，API 就会解除阻塞。 */
             pxSocket = ( ( FreeRTOS_Socket_t * ) xReceivedEvent.pvData );
             xAddress.sin_len = ( uint8_t ) sizeof( xAddress );
 
@@ -346,7 +319,7 @@ static void prvProcessIPEventsAndTimers( void )
                     case pdFALSE_UNSIGNED:
                         xAddress.sin_family = FREERTOS_AF_INET;
                         xAddress.sin_address.ulIP_IPv4 = FreeRTOS_htonl( pxSocket->xLocalAddress.ulIP_IPv4 );
-                        /* 'ulLocalAddress' will be set again by vSocketBind(). */
+                        /* 'ulLocalAddress' 将由 vSocketBind() 再次设置。 */
                         pxSocket->xLocalAddress.ulIP_IPv4 = 0;
                         break;
                 #endif /* ( ipconfigUSE_IPv4 != 0 ) */
@@ -355,42 +328,39 @@ static void prvProcessIPEventsAndTimers( void )
                     case pdTRUE_UNSIGNED:
                         xAddress.sin_family = FREERTOS_AF_INET6;
                         ( void ) memcpy( xAddress.sin_address.xIP_IPv6.ucBytes, pxSocket->xLocalAddress.xIP_IPv6.ucBytes, sizeof( xAddress.sin_address.xIP_IPv6.ucBytes ) );
-                        /* 'ulLocalAddress' will be set again by vSocketBind(). */
+                        /* 'ulLocalAddress' 将由 vSocketBind() 再次设置。 */
                         ( void ) memset( pxSocket->xLocalAddress.xIP_IPv6.ucBytes, 0, sizeof( pxSocket->xLocalAddress.xIP_IPv6.ucBytes ) );
                         break;
                 #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
                 default:
-                    /* MISRA 16.4 Compliance */
+                    /* MISRA 16.4 合规性 */
                     break;
             }
 
             xAddress.sin_port = FreeRTOS_ntohs( pxSocket->usLocalPort );
-            /* 'usLocalPort' will be set again by vSocketBind(). */
+            /* 'usLocalPort' 将由 vSocketBind() 再次设置。 */
             pxSocket->usLocalPort = 0U;
             ( void ) vSocketBind( pxSocket, &xAddress, sizeof( xAddress ), pdFALSE );
 
-            /* Before 'eSocketBindEvent' was sent it was tested that
-             * ( xEventGroup != NULL ) so it can be used now to wake up the
-             * user. */
+            /* 在发送 'eSocketBindEvent' 之前，已经测试了 ( xEventGroup != NULL )，
+             * 所以现在可以使用它来唤醒用户。 */
             pxSocket->xEventBits |= ( EventBits_t ) eSOCKET_BOUND;
             vSocketWakeUpUser( pxSocket );
             break;
 
         case eSocketCloseEvent:
 
-            /* The user API FreeRTOS_closesocket() has sent a message to the
-             * IP-task to actually close a socket. This is handled in
-             * vSocketClose().  As the socket gets closed, there is no way to
-             * report back to the API, so the API won't wait for the result */
+            /* 用户 API FreeRTOS_closesocket() 已向 IP 任务发送消息以实际关闭套接字。
+             * 这在 vSocketClose() 中处理。由于套接字被关闭，无法向 API 报告结果，
+             * 因此 API 不会等待结果。 */
             ( void ) vSocketClose( ( ( FreeRTOS_Socket_t * ) xReceivedEvent.pvData ) );
             break;
 
         case eStackTxEvent:
 
-            /* The network stack has generated a packet to send.  A
-             * pointer to the generated buffer is located in the pvData
-             * member of the received event structure. */
+            /* 网络协议栈已生成要发送的数据包。指向生成缓冲区的指针
+             * 位于接收到的事件结构的 pvData 成员中。 */
             vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
             break;
 
@@ -400,9 +370,9 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eSocketSelectEvent:
 
-            /* FreeRTOS_select() has got unblocked by a socket event,
-             * vSocketSelect() will check which sockets actually have an event
-             * and update the socket field xSocketBits. */
+            /* FreeRTOS_select() 已被套接字事件解除阻塞，
+             * vSocketSelect() 将检查哪些套接字实际发生了事件，
+             * 并更新套接字字段 xSocketBits。 */
             #if ( ipconfigSUPPORT_SELECT_FUNCTION == 1 )
             #if ( ipconfigSELECT_USES_NOTIFY != 0 )
                 {
@@ -421,8 +391,7 @@ static void prvProcessIPEventsAndTimers( void )
         case eSocketSignalEvent:
             #if ( ipconfigSUPPORT_SIGNALS != 0 )
 
-                /* Some task wants to signal the user of this socket in
-                 * order to interrupt a call to recv() or a call to select(). */
+                /* 某个任务想要向此套接字的用户发出信号，以中断对 recv() 或 select() 的调用。 */
                 ( void ) FreeRTOS_SignalSocket( ( Socket_t ) xReceivedEvent.pvData );
             #endif /* ipconfigSUPPORT_SIGNALS */
             break;
@@ -430,17 +399,15 @@ static void prvProcessIPEventsAndTimers( void )
         case eTCPTimerEvent:
             #if ( ipconfigUSE_TCP == 1 )
 
-                /* Simply mark the TCP timer as expired so it gets processed
-                 * the next time prvCheckNetworkTimers() is called. */
+                /* 只需将 TCP 定时器标记为已过期，以便在下次调用 prvCheckNetworkTimers() 时进行处理。 */
                 vIPSetTCPTimerExpiredState( pdTRUE );
             #endif /* ipconfigUSE_TCP */
             break;
 
         case eTCPAcceptEvent:
 
-            /* The API FreeRTOS_accept() was called, the IP-task will now
-             * check if the listening socket (communicated in pvData) actually
-             * received a new connection. */
+            /* API FreeRTOS_accept() 被调用，IP 任务现在将检查监听套接字（在 pvData 中传递）
+             * 是否确实接收到了新连接。 */
             #if ( ipconfigUSE_TCP == 1 )
                 pxSocket = ( ( FreeRTOS_Socket_t * ) xReceivedEvent.pvData );
 
@@ -454,8 +421,7 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eTCPNetStat:
 
-            /* FreeRTOS_netstat() was called to have the IP-task print an
-             * overview of all sockets and their connections */
+            /* FreeRTOS_netstat() 被调用，让 IP 任务打印所有套接字及其连接的概览 */
             #if ( ( ipconfigUSE_TCP == 1 ) && ( ipconfigHAS_PRINTF == 1 ) )
                 vTCPNetStat();
             #endif /* ipconfigUSE_TCP */
@@ -474,11 +440,11 @@ static void prvProcessIPEventsAndTimers( void )
             break;
 
         case eNoEvent:
-            /* xQueueReceive() returned because of a normal time-out. */
+            /* xQueueReceive() 由于正常超时返回。 */
             break;
 
         default:
-            /* Should not get here. */
+            /* 不应到达这里。 */
             break;
     }
 
@@ -488,69 +454,65 @@ static void prvProcessIPEventsAndTimers( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Helper function for prvIPTask, it does the first initializations
- *        at start-up. No parameters, no return type.
+ * @brief prvIPTask 的辅助函数，它在启动时执行首次初始化。无参数，无返回类型。
  */
 static void prvIPTask_Initialise( void )
 {
     NetworkInterface_t * pxInterface;
 
-    /* A possibility to set some additional task properties. */
+    /* 设置一些额外任务属性的可能性。 */
     iptraceIP_TASK_STARTING();
 
-    /* Generate a dummy message to say that the network connection has gone
-     * down.  This will cause this task to initialise the network interface.  After
-     * this it is the responsibility of the network interface hardware driver to
-     * send this message if a previously connected network is disconnected. */
+    /* 生成一条虚拟消息，表示网络连接已断开。
+     * 这将导致此任务初始化网络接口。
+     * 在此之后，如果以前连接的网络断开，网络接口硬件驱动程序有责任发送此消息。 */
 
     vNetworkTimerReload( pdMS_TO_TICKS( ipINITIALISATION_RETRY_DELAY ) );
 
     for( pxInterface = pxNetworkInterfaces; pxInterface != NULL; pxInterface = pxInterface->pxNext )
     {
-        /* Post a 'eNetworkDownEvent' for every interface. */
+        /* 为每个接口发布一个 'eNetworkDownEvent'。 */
         FreeRTOS_NetworkDown( pxInterface );
     }
 
     #if ( ipconfigUSE_TCP == 1 )
     {
-        /* Initialise the TCP timer. */
+        /* 初始化 TCP 定时器。 */
         vTCPTimerReload( pdMS_TO_TICKS( ipTCP_TIMER_PERIOD_MS ) );
     }
     #endif
 
     #if ipconfigIS_ENABLED( ipconfigUSE_IPv4 )
-        /* Mark the ARP timer as inactive since we are not waiting on any resolution as of now. */
+        /* 将 ARP 定时器标记为非活动状态，因为目前我们不在等待任何解析。 */
         vIPSetARPResolutionTimerEnableState( pdFALSE );
     #endif
 
     #if ipconfigIS_ENABLED( ipconfigUSE_IPv6 )
-        /* Mark the ND timer as inactive since we are not waiting on any resolution as of now. */
+        /* 将 ND 定时器标记为非活动状态，因为目前我们不在等待任何解析。 */
         vIPSetNDResolutionTimerEnableState( pdFALSE );
     #endif
 
     #if ( ( ipconfigDNS_USE_CALLBACKS != 0 ) && ( ipconfigUSE_DNS != 0 ) )
     {
-        /* The following function is declared in FreeRTOS_DNS.c and 'private' to
-         * this library */
+        /* 以下函数在 FreeRTOS_DNS.c 中声明，并且是该库的 '私有' 函数 */
         vDNSInitialise();
     }
     #endif /* ( ipconfigDNS_USE_CALLBACKS != 0 ) && ( ipconfigUSE_DNS != 0 ) */
 
     #if ( ( ipconfigUSE_DNS_CACHE != 0 ) && ( ipconfigUSE_DNS != 0 ) )
     {
-        /* Clear the DNS cache once only. */
+        /* 仅清除一次 DNS 缓存。 */
         FreeRTOS_dnsclear();
     }
     #endif /* ( ( ipconfigUSE_DNS_CACHE != 0 ) && ( ipconfigUSE_DNS != 0 ) ) */
 
-    /* Initialisation is complete and events can now be processed. */
+    /* 初始化完成，现在可以处理事件了。 */
     xIPTaskInitialised = pdTRUE;
 }
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Check the value of 'xNetworkDownEventPending'. When non-zero, pending
- *        network-down events will be handled.
+ * @brief 检查 'xNetworkDownEventPending' 的值。当非零时，将处理挂起的网络断开事件。
  */
 static void prvIPTask_CheckPendingEvents( void )
 {
@@ -558,10 +520,8 @@ static void prvIPTask_CheckPendingEvents( void )
 
     if( xNetworkDownEventPending != pdFALSE )
     {
-        /* A network down event could not be posted to the network event
-         * queue because the queue was full.
-         * As this code runs in the IP-task, it can be done directly by
-         * calling prvProcessNetworkDownEvent(). */
+        /* 无法将网络断开事件发布到网络事件队列，因为队列已满。
+         * 由于此代码在 IP 任务中运行，可以通过直接调用 prvProcessNetworkDownEvent() 来完成。 */
         xNetworkDownEventPending = pdFALSE;
 
         for( pxInterface = FreeRTOS_FirstNetworkInterface();
@@ -580,9 +540,9 @@ static void prvIPTask_CheckPendingEvents( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Call the state machine of either DHCP, DHCPv6, or RA, whichever is activated.
+ * @brief 调用 DHCP、DHCPv6 或 RA 中被激活的状态机。
  *
- * @param[in] pxEndPoint The end-point for which the state-machine will be called.
+ * @param[in] pxEndPoint 将为其调用状态机的端点。
  */
 static void prvCallDHCP_RA_Handler( NetworkEndPoint_t * pxEndPoint )
 {
@@ -594,12 +554,12 @@ static void prvCallDHCP_RA_Handler( NetworkEndPoint_t * pxEndPoint )
             xIsIPv6 = pdTRUE;
         }
     #endif
-    /* The DHCP state machine needs processing. */
+    /* DHCP 状态机需要处理。 */
     #if ( ipconfigUSE_DHCP == 1 )
     {
         if( ( pxEndPoint->bits.bWantDHCP != pdFALSE_UNSIGNED ) && ( xIsIPv6 == pdFALSE ) )
         {
-            /* Process DHCP messages for a given end-point. */
+            /* 处理给定端点的 DHCP 消息。 */
             vDHCPProcess( pdFALSE, pxEndPoint );
         }
     }
@@ -608,7 +568,7 @@ static void prvCallDHCP_RA_Handler( NetworkEndPoint_t * pxEndPoint )
     {
         if( ( xIsIPv6 == pdTRUE ) && ( pxEndPoint->bits.bWantDHCP != pdFALSE_UNSIGNED ) )
         {
-            /* Process DHCPv6 messages for a given end-point. */
+            /* 处理给定端点的 DHCPv6 消息。 */
             vDHCPv6Process( pdFALSE, pxEndPoint );
         }
     }
@@ -617,23 +577,22 @@ static void prvCallDHCP_RA_Handler( NetworkEndPoint_t * pxEndPoint )
     {
         if( ( xIsIPv6 == pdTRUE ) && ( pxEndPoint->bits.bWantRA != pdFALSE_UNSIGNED ) )
         {
-            /* Process RA messages for a given end-point. */
+            /* 处理给定端点的 RA 消息。 */
             vRAProcess( pdFALSE, pxEndPoint );
         }
     }
     #endif /* ( ( ipconfigUSE_RA == 1 ) && ( ipconfigUSE_IPv6 != 0 ) ) */
 
-    /* Mention pxEndPoint and xIsIPv6 in case they have not been used. */
+    /* 提及 pxEndPoint 和 xIsIPv6，以防它们未被使用。 */
     ( void ) pxEndPoint;
     ( void ) xIsIPv6;
 }
 /*-----------------------------------------------------------*/
 
 /**
- * @brief The variable 'xIPTaskHandle' is declared static.  This function
- *        gives read-only access to it.
+ * @brief 变量 'xIPTaskHandle' 被声明为静态。此函数提供对其的只读访问。
  *
- * @return The handle of the IP-task.
+ * @return IP 任务的句柄。
  */
 TaskHandle_t FreeRTOS_GetIPTaskHandle( void )
 {
@@ -642,15 +601,15 @@ TaskHandle_t FreeRTOS_GetIPTaskHandle( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Perform all the required tasks when the network gets connected.
+ * @brief 当网络连接时，执行所有必需的任务。
  *
- * @param pxEndPoint The end-point which goes up.
+ * @param pxEndPoint 启动的端点。
  */
 void vIPNetworkUpCalls( struct xNetworkEndPoint * pxEndPoint )
 {
     if( pxEndPoint->bits.bIPv6 == pdTRUE_UNSIGNED )
     {
-        /* IPv6 end-points have a solicited-node address that needs extra housekeeping. */
+        /* IPv6 端点具有请求节点地址，需要额外的内务处理。 */
         #if ( ipconfigIS_ENABLED( ipconfigUSE_IPv6 ) )
             vManageSolicitedNodeAddress( pxEndPoint, pdTRUE );
         #endif
@@ -670,7 +629,7 @@ void vIPNetworkUpCalls( struct xNetworkEndPoint * pxEndPoint )
     #endif
     #endif /* ipconfigUSE_NETWORK_EVENT_HOOK */
 
-    /* Set remaining time to 0 so it will become active immediately. */
+    /* 将剩余时间设置为 0，使其立即变为活动状态。 */
     if( pxEndPoint->bits.bIPv6 == pdTRUE_UNSIGNED )
     {
         #if ipconfigIS_ENABLED( ipconfigUSE_IPv6 )
@@ -687,18 +646,16 @@ void vIPNetworkUpCalls( struct xNetworkEndPoint * pxEndPoint )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Handle the incoming Ethernet packets.
+ * @brief 处理传入的以太网数据包。
  *
- * @param[in] pxBuffer Linked/un-linked network buffer descriptor(s)
- *                      to be processed.
+ * @param[in] pxBuffer 要处理的链接/未链接网络缓冲区描述符。
  */
 static void prvHandleEthernetPacket( NetworkBufferDescriptor_t * pxBuffer )
 {
     #if ( ipconfigUSE_LINKED_RX_MESSAGES == 0 )
     {
-        /* When ipconfigUSE_LINKED_RX_MESSAGES is set to 0 then only one
-         * buffer will be sent at a time.  This is the default way for +TCP to pass
-         * messages from the MAC to the TCP/IP stack. */
+        /* 当 ipconfigUSE_LINKED_RX_MESSAGES 设置为 0 时，一次只发送一个缓冲区。
+         * 这是 +TCP 将消息从 MAC 传递到 TCP/IP 协议栈的默认方式。 */
         if( pxBuffer != NULL )
         {
             prvProcessEthernetPacket( pxBuffer );
@@ -708,20 +665,17 @@ static void prvHandleEthernetPacket( NetworkBufferDescriptor_t * pxBuffer )
     {
         NetworkBufferDescriptor_t * pxNextBuffer;
 
-        /* An optimisation that is useful when there is high network traffic.
-         * Instead of passing received packets into the IP task one at a time the
-         * network interface can chain received packets together and pass them into
-         * the IP task in one go.  The packets are chained using the pxNextBuffer
-         * member.  The loop below walks through the chain processing each packet
-         * in the chain in turn. */
+        /* 这在网络流量大时很有用。网络接口可以将接收到的数据包链接起来，
+         * 并一次性将它们传递到 IP 任务，而不是将接收到的数据包一次一个地传递到 IP 任务。
+         * 数据包使用 pxNextBuffer 成员进行链接。下面的循环遍历链，依次处理链中的每个数据包。 */
 
-        /* While there is another packet in the chain. */
+        /* 当链中还有另一个数据包时。 */
         while( pxBuffer != NULL )
         {
-            /* Store a pointer to the buffer after pxBuffer for use later on. */
+            /* 存储指向 pxBuffer 之后缓冲区的指针，以备后用。 */
             pxNextBuffer = pxBuffer->pxNextBuffer;
 
-            /* Make it NULL to avoid using it later on. */
+            /* 将其设为 NULL 以避免以后使用它。 */
             pxBuffer->pxNextBuffer = NULL;
 
             prvProcessEthernetPacket( pxBuffer );
@@ -733,10 +687,10 @@ static void prvHandleEthernetPacket( NetworkBufferDescriptor_t * pxBuffer )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Send a network packet.
+ * @brief 发送一个网络数据包。
  *
- * @param[in] pxNetworkBuffer The message buffer.
- * @param[in] xReleaseAfterSend When true, the network interface will own the buffer and is responsible for it's release.
+ * @param[in] pxNetworkBuffer 消息缓冲区。
+ * @param[in] xReleaseAfterSend 为真时，网络接口将拥有该缓冲区并负责释放它。
  */
 static void prvForwardTxPacket( NetworkBufferDescriptor_t * pxNetworkBuffer,
                                 BaseType_t xReleaseAfterSend )
@@ -751,11 +705,10 @@ static void prvForwardTxPacket( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Send a network down event to the IP-task. If it fails to post a message,
- *         the failure will be noted in the variable 'xNetworkDownEventPending'
- *         and later on a 'network-down' event, it will be executed.
+ * @brief 向 IP 任务发送网络断开事件。如果发布消息失败，失败将被记录在变量
+ *        'xNetworkDownEventPending' 中，稍后在执行“网络断开”事件时，它将被执行。
  *
- * @param[in] pxNetworkInterface The interface that goes down.
+ * @param[in] pxNetworkInterface 宕机的网络接口。
  */
 void FreeRTOS_NetworkDown( struct xNetworkInterface * pxNetworkInterface )
 {
@@ -766,16 +719,16 @@ void FreeRTOS_NetworkDown( struct xNetworkInterface * pxNetworkInterface )
     xNetworkDownEvent.eEventType = eNetworkDownEvent;
     xNetworkDownEvent.pvData = pxNetworkInterface;
 
-    /* Simply send the network task the appropriate event. */
+    /* 只需向网络任务发送相应的事件。 */
     if( xSendEventStructToIPTask( &xNetworkDownEvent, xDontBlock ) != pdPASS )
     {
-        /* Could not send the message, so it is still pending. */
+        /* 无法发送消息，因此它仍处于挂起状态。 */
         pxNetworkInterface->bits.bCallDownEvent = pdTRUE;
         xNetworkDownEventPending = pdTRUE;
     }
     else
     {
-        /* Message was sent so it is not pending. */
+        /* 消息已发送，因此不再挂起。 */
         pxNetworkInterface->bits.bCallDownEvent = pdFALSE;
     }
 
@@ -784,14 +737,12 @@ void FreeRTOS_NetworkDown( struct xNetworkInterface * pxNetworkInterface )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Utility function. Process Network Down event from ISR.
- *        This function is supposed to be called form an ISR. It is recommended
- * - *        use 'FreeRTOS_NetworkDown()', when calling from a normal task.
+ * @brief 实用函数。从中断服务程序 (ISR) 处理网络断开事件。
+ *        此函数应该从 ISR 中调用。建议从普通任务调用时使用 'FreeRTOS_NetworkDown()'。
  *
- * @param[in] pxNetworkInterface The interface that goes down.
+ * @param[in] pxNetworkInterface 宕机的网络接口。
  *
- * @return If the event was processed successfully, then return pdTRUE.
- *         Else pdFALSE.
+ * @return 如果事件处理成功，则返回 pdTRUE。否则返回 pdFALSE。
  */
 BaseType_t FreeRTOS_NetworkDownFromISR( struct xNetworkInterface * pxNetworkInterface )
 {
@@ -801,16 +752,16 @@ BaseType_t FreeRTOS_NetworkDownFromISR( struct xNetworkInterface * pxNetworkInte
     xNetworkDownEvent.eEventType = eNetworkDownEvent;
     xNetworkDownEvent.pvData = pxNetworkInterface;
 
-    /* Simply send the network task the appropriate event. */
+    /* 只需向网络任务发送相应的事件。 */
     if( xQueueSendToBackFromISR( xNetworkEventQueue, &xNetworkDownEvent, &xHigherPriorityTaskWoken ) != pdPASS )
     {
-        /* Could not send the message, so it is still pending. */
+        /* 无法发送消息，因此它仍处于挂起状态。 */
         pxNetworkInterface->bits.bCallDownEvent = pdTRUE;
         xNetworkDownEventPending = pdTRUE;
     }
     else
     {
-        /* Message was sent so it is not pending. */
+        /* 消息已发送，因此不再挂起。 */
         pxNetworkInterface->bits.bCallDownEvent = pdFALSE;
         xNetworkDownEventPending = pdFALSE;
     }
@@ -824,18 +775,14 @@ BaseType_t FreeRTOS_NetworkDownFromISR( struct xNetworkInterface * pxNetworkInte
 #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
 
 /**
- * @brief Obtain a buffer big enough for a UDP payload of given size.
- *        NOTE: This function is kept for backward compatibility and will
- *        only allocate IPv4 payload buffers. Newer designs should use
- *        FreeRTOS_GetUDPPayloadBuffer_Multi(), which can
- *        allocate a IPv4 or IPv6 buffer based on ucIPType parameter .
+ * @brief 获取一个足够大的缓冲区以容纳给定大小的 UDP 负载。
+ *        注意：保留此函数是为了向后兼容，并且只会分配 IPv4 负载缓冲区。
+ *        较新的设计应使用 FreeRTOS_GetUDPPayloadBuffer_Multi()，它可以根据 ucIPType 参数分配 IPv4 或 IPv6 缓冲区。
  *
- * @param[in] uxRequestedSizeBytes The size of the UDP payload.
- * @param[in] uxBlockTimeTicks Maximum amount of time for which this call
- *            can block. This value is capped internally.
+ * @param[in] uxRequestedSizeBytes UDP 负载的大小。
+ * @param[in] uxBlockTimeTicks 此调用可以阻塞的最大时间。此值在内部被限制。
  *
- * @return If a buffer was created then the pointer to that buffer is returned,
- *         else a NULL pointer is returned.
+ * @return 如果创建了缓冲区，则返回指向该缓冲区的指针，否则返回 NULL 指针。
  */
     void * FreeRTOS_GetUDPPayloadBuffer( size_t uxRequestedSizeBytes,
                                          TickType_t uxBlockTimeTicks )
@@ -846,16 +793,13 @@ BaseType_t FreeRTOS_NetworkDownFromISR( struct xNetworkInterface * pxNetworkInte
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Obtain a buffer big enough for a UDP payload of given size and
- *        given IP type.
+ * @brief 获取一个足够大的缓冲区以容纳给定大小和给定 IP 类型的 UDP 负载。
  *
- * @param[in] uxRequestedSizeBytes The size of the UDP payload.
- * @param[in] uxBlockTimeTicks Maximum amount of time for which this call
- *            can block. This value is capped internally.
- * @param[in] ucIPType Either ipTYPE_IPv4 (0x40) or ipTYPE_IPv6 (0x60)
+ * @param[in] uxRequestedSizeBytes UDP 负载的大小。
+ * @param[in] uxBlockTimeTicks 此调用可以阻塞的最大时间。此值在内部被限制。
+ * @param[in] ucIPType ipTYPE_IPv4 (0x40) 或 ipTYPE_IPv6 (0x60)
  *
- * @return If a buffer was created then the pointer to that buffer is returned,
- *         else a NULL pointer is returned.
+ * @return 如果创建了缓冲区，则返回指向该缓冲区的指针，否则返回 NULL 指针。
  */
 void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
                                            TickType_t uxBlockTimeTicks,
@@ -868,9 +812,8 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
 
     configASSERT( ( ucIPType == ipTYPE_IPv6 ) || ( ucIPType == ipTYPE_IPv4 ) );
 
-    /* Cap the block time.  The reason for this is explained where
-     * ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS is defined (assuming an official
-     * FreeRTOSIPConfig.h header file is being used). */
+    /* 限制阻塞时间。这样做的原因在定义 ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS 的地方进行了解释
+     * （假设使用的是官方的 FreeRTOSIPConfig.h 头文件）。 */
     if( uxBlockTime > ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS )
     {
         uxBlockTime = ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS;
@@ -891,14 +834,14 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
         #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
         default:
-            /* Shouldn't reach here. */
-            /* MISRA 16.4 Compliance */
+            /* 不应到达这里。 */
+            /* MISRA 16.4 合规性 */
             break;
     }
 
     if( uxPayloadOffset != 0U )
     {
-        /* Obtain a network buffer with the required amount of storage. */
+        /* 获取具有所需存储量的网络缓冲区。 */
         pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( uxPayloadOffset + uxRequestedSizeBytes, uxBlockTime );
 
         if( pxNetworkBuffer != NULL )
@@ -907,20 +850,19 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
             size_t uxIndex = ipUDP_PAYLOAD_IP_TYPE_OFFSET;
             BaseType_t xPayloadIPTypeOffset = ( BaseType_t ) uxIndex;
 
-            /* Set the actual packet size in case a bigger buffer was returned. */
+            /* 如果返回了更大的缓冲区，则设置实际的数据包大小。 */
             pxNetworkBuffer->xDataLength = uxPayloadOffset + uxRequestedSizeBytes;
 
-            /* Skip 3 headers. */
+            /* 跳过 3 个头部。 */
             pvReturn = ( void * ) &( pxNetworkBuffer->pucEthernetBuffer[ uxPayloadOffset ] );
 
-            /* Later a pointer to a UDP payload is used to retrieve a NetworkBuffer.
-             * Store the packet type at 48 bytes before the start of the UDP payload. */
+            /* 稍后使用指向 UDP 负载的指针来检索 NetworkBuffer。
+             * 将数据包类型存储在 UDP 负载开始前 48 个字节的位置。 */
             pucIPType = ( uint8_t * ) pvReturn;
             pucIPType = &( pucIPType[ -xPayloadIPTypeOffset ] );
 
-            /* For a IPv4 packet, pucIPType points to 6 bytes before the
-             * pucEthernetBuffer, for a IPv6 packet, pucIPType will point to the
-             * first byte of the IP-header: 'ucVersionTrafficClass'. */
+            /* 对于 IPv4 数据包，pucIPType 指向 pucEthernetBuffer 之前的 6 个字节处，
+             * 对于 IPv6 数据包，pucIPType 将指向 IP 头的第一个字节：'ucVersionTrafficClass'。 */
             *pucIPType = ucIPType;
         }
     }
@@ -929,16 +871,15 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
 }
 /*-----------------------------------------------------------*/
 
-/*_RB_ Should we add an error or assert if the task priorities are set such that the servers won't function as expected? */
+/*_RB_ 我们是否应该添加一个错误或断言，如果任务优先级设置导致服务器无法按预期运行？ */
 
-/*_HT_ There was a bug in FreeRTOS_TCP_IP.c that only occurred when the applications' priority was too high.
- * As that bug has been repaired, there is not an urgent reason to warn.
- * It is better though to use the advised priority scheme. */
+/*_HT_ FreeRTOS_TCP_IP.c 中有一个 bug，只在应用程序优先级过高时才会发生。
+ * 由于该 bug 已修复，没有紧急理由发出警告。
+ * 不过，最好使用建议的优先级方案。 */
 
 #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) && ( ipconfigUSE_IPv4 != 0 )
 
-/* Provide backward-compatibility with the earlier FreeRTOS+TCP which only had
- * single network interface. */
+/* 提供与早期仅具有单个网络接口的 FreeRTOS+TCP 的向后兼容性。 */
     BaseType_t FreeRTOS_IPInit( const uint8_t ucIPAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
                                 const uint8_t ucNetMask[ ipIP_ADDRESS_LENGTH_BYTES ],
                                 const uint8_t ucGatewayAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
@@ -948,8 +889,7 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
         static NetworkInterface_t xInterfaces[ 1 ];
         static NetworkEndPoint_t xEndPoints[ 1 ];
 
-        /* IF the following function should be declared in the NetworkInterface.c
-         * linked in the project. */
+        /* 如果以下函数应该在项目链接的 NetworkInterface.c 中声明。 */
         ( void ) pxFillInterfaceDescriptor( 0, &( xInterfaces[ 0 ] ) );
         FreeRTOS_FillEndPoint( &( xInterfaces[ 0 ] ), &( xEndPoints[ 0 ] ), ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress );
         #if ( ipconfigUSE_DHCP != 0 )
@@ -963,22 +903,20 @@ void * FreeRTOS_GetUDPPayloadBuffer_Multi( size_t uxRequestedSizeBytes,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Initialise the FreeRTOS-Plus-TCP network stack and initialise the IP-task.
- *        Before calling this function, at least 1 interface and 1 end-point must
- *        have been set-up.
+ * @brief 初始化 FreeRTOS-Plus-TCP 网络协议栈并初始化 IP 任务。
+ *        在调用此函数之前，必须至少设置 1 个接口和 1 个端点。
  */
 BaseType_t FreeRTOS_IPInit_Multi( void )
 {
     BaseType_t xReturn = pdFALSE;
 
-    /* There must be at least one interface and one end-point. */
+    /* 必须至少有一个接口和一个端点。 */
     configASSERT( FreeRTOS_FirstNetworkInterface() != NULL );
 
-    /* Check that the configuration values are correct and that the IP-task has not
-     * already been initialized. */
+    /* 检查配置值是否正确，以及 IP 任务是否尚未初始化。 */
     vPreCheckConfigs();
 
-    /* Attempt to create the queue used to communicate with the IP task. */
+    /* 尝试创建用于与 IP 任务通信的队列。 */
     #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
     {
         static StaticQueue_t xNetworkEventStaticQueue;
@@ -999,19 +937,18 @@ BaseType_t FreeRTOS_IPInit_Multi( void )
     {
         #if ( configQUEUE_REGISTRY_SIZE > 0 )
         {
-            /* A queue registry is normally used to assist a kernel aware
-             * debugger.  If one is in use then it will be helpful for the debugger
-             * to show information about the network event queue. */
+            /* 队列注册表通常用于辅助内核感知调试器。如果正在使用，
+             * 那么调试器显示有关网络事件队列的信息将很有帮助。 */
             vQueueAddToRegistry( xNetworkEventQueue, "NetEvnt" );
         }
         #endif /* configQUEUE_REGISTRY_SIZE */
 
         if( xNetworkBuffersInitialise() == pdPASS )
         {
-            /* Prepare the sockets interface. */
+            /* 准备套接字接口。 */
             vNetworkSocketsInit();
 
-            /* Create the task that processes Ethernet and stack events. */
+            /* 创建处理以太网和协议栈事件的任务。 */
             #if ( configSUPPORT_STATIC_ALLOCATION == 1 )
             {
                 static StaticTask_t xIPTaskBuffer;
@@ -1042,16 +979,16 @@ BaseType_t FreeRTOS_IPInit_Multi( void )
         }
         else
         {
-            FreeRTOS_debug_printf( ( "FreeRTOS_IPInit_Multi: xNetworkBuffersInitialise() failed\n" ) );
+            FreeRTOS_debug_printf( ( "FreeRTOS_IPInit_Multi: xNetworkBuffersInitialise() 失败\n" ) );
 
-            /* Clean up. */
+            /* 清理。 */
             vQueueDelete( xNetworkEventQueue );
             xNetworkEventQueue = NULL;
         }
     }
     else
     {
-        FreeRTOS_debug_printf( ( "FreeRTOS_IPInit_Multi: Network event queue could not be created\n" ) );
+        FreeRTOS_debug_printf( ( "FreeRTOS_IPInit_Multi: 无法创建网络事件队列\n" ) );
     }
 
     return xReturn;
@@ -1059,9 +996,9 @@ BaseType_t FreeRTOS_IPInit_Multi( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Release the UDP payload buffer.
+ * @brief 释放 UDP 负载缓冲区。
  *
- * @param[in] pvBuffer Pointer to the UDP buffer that is to be released.
+ * @param[in] pvBuffer 指向要释放的 UDP 缓冲区的指针。
  */
 void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 {
@@ -1076,14 +1013,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigUSE_IPv4 != 0 )
 
 /**
- * @brief Get the current IPv4 address configuration. Only non-NULL pointers will
- *        be filled in. pxEndPoint must be non-NULL.
+ * @brief 获取当前的 IPv4 地址配置。只有非 NULL 指针才会被填充。pxEndPoint 必须非 NULL。
  *
- * @param[out] pulIPAddress The current IP-address assigned.
- * @param[out] pulNetMask The netmask used for current subnet.
- * @param[out] pulGatewayAddress The gateway address.
- * @param[out] pulDNSServerAddress The DNS server address.
- * @param[in] pxEndPoint The end-point which is being questioned.
+ * @param[out] pulIPAddress 分配的当前 IP 地址。
+ * @param[out] pulNetMask 当前子网使用的子网掩码。
+ * @param[out] pulGatewayAddress 网关地址。
+ * @param[out] pulDNSServerAddress DNS 服务器地址。
+ * @param[in] pxEndPoint 正被查询的端点。
  */
     void FreeRTOS_GetEndPointConfiguration( uint32_t * pulIPAddress,
                                             uint32_t * pulNetMask,
@@ -1093,7 +1029,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
     {
         if( ENDPOINT_IS_IPv4( pxEndPoint ) )
         {
-            /* Return the address configuration to the caller. */
+            /* 将地址配置返回给调用者。 */
 
             if( pulIPAddress != NULL )
             {
@@ -1112,7 +1048,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 
             if( pulDNSServerAddress != NULL )
             {
-                *pulDNSServerAddress = pxEndPoint->ipv4_settings.ulDNSServerAddresses[ 0 ]; /*_RB_ Only returning the address of the first DNS server. */
+                *pulDNSServerAddress = pxEndPoint->ipv4_settings.ulDNSServerAddresses[ 0 ]; /*_RB_ 仅返回第一个 DNS 服务器的地址。 */
             }
         }
     }
@@ -1123,15 +1059,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) && ( ipconfigUSE_IPv4 != 0 )
 
 /**
- * @brief Get the current IPv4 address configuration of the first endpoint.
- *        Only non-NULL pointers will be filled in.
- *        NOTE: This function is kept for backward compatibility. Newer
- *        designs should use FreeRTOS_SetEndPointConfiguration().
+ * @brief 获取第一个端点的当前 IPv4 地址配置。只有非 NULL 指针才会被填充。
+ *        注意：保留此函数是为了向后兼容。较新的设计应使用 FreeRTOS_SetEndPointConfiguration()。
  *
- * @param[out] pulIPAddress The current IP-address assigned.
- * @param[out] pulNetMask The netmask used for current subnet.
- * @param[out] pulGatewayAddress The gateway address.
- * @param[out] pulDNSServerAddress The DNS server address.
+ * @param[out] pulIPAddress 分配的当前 IP 地址。
+ * @param[out] pulNetMask 当前子网使用的子网掩码。
+ * @param[out] pulGatewayAddress 网关地址。
+ * @param[out] pulDNSServerAddress DNS 服务器地址。
  */
     void FreeRTOS_GetAddressConfiguration( uint32_t * pulIPAddress,
                                            uint32_t * pulNetMask,
@@ -1140,7 +1074,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
     {
         NetworkEndPoint_t * pxEndPoint;
 
-        /* Get first end point. */
+        /* 获取第一个端点。 */
         pxEndPoint = FreeRTOS_FirstEndPoint( NULL );
 
         if( pxEndPoint != NULL )
@@ -1155,14 +1089,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigUSE_IPv4 != 0 )
 
 /**
- * @brief Set the current IPv4 network address configuration. Only non-NULL pointers will
- *        pointers will be used. pxEndPoint must pointer to a valid end-point.
+ * @brief 设置当前的 IPv4 网络地址配置。只有非 NULL 指针才会被使用。pxEndPoint 必须指向有效的端点。
  *
- * @param[in] pulIPAddress The current IP-address assigned.
- * @param[in] pulNetMask The netmask used for current subnet.
- * @param[in] pulGatewayAddress The gateway address.
- * @param[in] pulDNSServerAddress The DNS server address.
- * @param[in] pxEndPoint The end-point which is being questioned.
+ * @param[in] pulIPAddress 分配的当前 IP 地址。
+ * @param[in] pulNetMask 当前子网使用的子网掩码。
+ * @param[in] pulGatewayAddress 网关地址。
+ * @param[in] pulDNSServerAddress DNS 服务器地址。
+ * @param[in] pxEndPoint 正被查询的端点。
  */
     void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
                                             const uint32_t * pulNetMask,
@@ -1170,7 +1103,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
                                             const uint32_t * pulDNSServerAddress,
                                             struct xNetworkEndPoint * pxEndPoint )
     {
-        /* Update the address configuration. */
+        /* 更新地址配置。 */
 
         if( ENDPOINT_IS_IPv4( pxEndPoint ) )
         {
@@ -1202,15 +1135,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) && ( ipconfigUSE_IPv4 != 0 )
 
 /**
- * @brief Set the current IPv4 network address configuration. Only non-NULL
- *        pointers will be used.
- *        NOTE: This function is kept for backward compatibility. Newer
- *        designs should use FreeRTOS_SetEndPointConfiguration().
+ * @brief 设置当前的 IPv4 网络地址配置。只有非 NULL 指针才会被使用。
+ *        注意：保留此函数是为了向后兼容。较新的设计应使用 FreeRTOS_SetEndPointConfiguration()。
  *
- * @param[in] pulIPAddress The current IP-address assigned.
- * @param[in] pulNetMask The netmask used for current subnet.
- * @param[in] pulGatewayAddress The gateway address.
- * @param[in] pulDNSServerAddress The DNS server address.
+ * @param[in] pulIPAddress 分配的当前 IP 地址。
+ * @param[in] pulNetMask 当前子网使用的子网掩码。
+ * @param[in] pulGatewayAddress 网关地址。
+ * @param[in] pulDNSServerAddress DNS 服务器地址。
  */
     void FreeRTOS_SetAddressConfiguration( const uint32_t * pulIPAddress,
                                            const uint32_t * pulNetMask,
@@ -1219,7 +1150,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
     {
         NetworkEndPoint_t * pxEndPoint;
 
-        /* Get first end point. */
+        /* 获取第一个端点。 */
         pxEndPoint = FreeRTOS_FirstEndPoint( NULL );
 
         if( pxEndPoint != NULL )
@@ -1234,14 +1165,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigUSE_TCP == 1 )
 
 /**
- * @brief Release the memory that was previously obtained by calling FreeRTOS_recv()
- *        with the flag 'FREERTOS_ZERO_COPY'.
+ * @brief 释放之前通过调用带有 'FREERTOS_ZERO_COPY' 标志的 FreeRTOS_recv() 获取的内存。
  *
- * @param[in] xSocket The socket that was read from.
- * @param[in] pvBuffer The buffer returned in the call to FreeRTOS_recv().
- * @param[in] xByteCount The number of bytes that have been used.
+ * @param[in] xSocket 读取的套接字。
+ * @param[in] pvBuffer 在调用 FreeRTOS_recv() 时返回的缓冲区。
+ * @param[in] xByteCount 已使用的字节数。
  *
- * @return pdPASS if the buffer was released successfully, otherwise pdFAIL is returned.
+ * @return 如果缓冲区成功释放则返回 pdPASS，否则返回 pdFAIL。
  */
     BaseType_t FreeRTOS_ReleaseTCPPayloadBuffer( Socket_t xSocket,
                                                  void const * pvBuffer,
@@ -1252,15 +1182,15 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
         uint8_t * pucData;
         size_t uxBytesAvailable = uxStreamBufferGetPtr( xSocket->u.xTCP.rxStream, &( pucData ) );
 
-        /* Make sure the pointer is correct. */
+        /* 确保指针正确。 */
         configASSERT( pucData == ( uint8_t * ) pvBuffer );
 
-        /* Avoid releasing more bytes than available. */
+        /* 避免释放超过可用的字节数。 */
         configASSERT( uxBytesAvailable >= ( size_t ) xByteCount );
 
         if( ( pucData == pvBuffer ) && ( uxBytesAvailable >= ( size_t ) xByteCount ) )
         {
-            /* Call recv with NULL pointer to advance the circular buffer. */
+            /* 使用 NULL 指针调用 recv 以推进环形缓冲区。 */
             xByteCountReleased = FreeRTOS_recv( xSocket,
                                                 NULL,
                                                 ( size_t ) xByteCount,
@@ -1282,15 +1212,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
 
 /**
- * @brief Send a ping request to the given IP address. After receiving a reply,
- *        IP-task will call a user-supplied function 'vApplicationPingReplyHook()'.
+ * @brief 向给定的 IP 地址发送 ping 请求。收到回复后，IP 任务将调用用户提供的函数 'vApplicationPingReplyHook()'。
  *
- * @param[in] ulIPAddress The IP address to which the ping is to be sent.
- * @param[in] uxNumberOfBytesToSend Number of bytes in the ping request.
- * @param[in] uxBlockTimeTicks Maximum number of ticks to wait.
+ * @param[in] ulIPAddress 要发送 ping 的 IP 地址。
+ * @param[in] uxNumberOfBytesToSend ping 请求中的字节数。
+ * @param[in] uxBlockTimeTicks 最大等待滴答数。
  *
- * @return If successfully sent to IP task for processing then the sequence
- *         number of the ping packet or else, pdFAIL.
+ * @return 如果成功发送到 IP 任务进行处理，则为 ping 数据包的序列号，否则为 pdFAIL。
  */
     BaseType_t FreeRTOS_SendPingRequest( uint32_t ulIPAddress,
                                          size_t uxNumberOfBytesToSend,
@@ -1329,28 +1257,27 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
                 pxICMPHeader = ( ( ICMPHeader_t * ) &( pxNetworkBuffer->pucEthernetBuffer[ ipIP_PAYLOAD_OFFSET ] ) );
                 usSequenceNumber++;
 
-                /* Fill in the basic header information. */
+                /* 填写基本头部信息。 */
                 pxICMPHeader->ucTypeOfMessage = ipICMP_ECHO_REQUEST;
                 pxICMPHeader->ucTypeOfService = 0;
                 pxICMPHeader->usIdentifier = usSequenceNumber;
                 pxICMPHeader->usSequenceNumber = usSequenceNumber;
 
-                /* Find the start of the data. */
+                /* 找到数据的起始位置。 */
                 pucChar = ( uint8_t * ) pxICMPHeader;
                 pucChar = &( pucChar[ sizeof( ICMPHeader_t ) ] );
 
-                /* Just memset the data to a fixed value. */
+                /* 只需将数据 memset 为固定值。 */
                 ( void ) memset( pucChar, ( int ) ipECHO_DATA_FILL_BYTE, uxNumberOfBytesToSend );
 
-                /* The message is complete, IP and checksum's are handled by
-                 * vProcessGeneratedUDPPacket */
+                /* 消息已完成，IP 和校验和由 vProcessGeneratedUDPPacket 处理 */
                 pxNetworkBuffer->pucEthernetBuffer[ ipSOCKET_OPTIONS_OFFSET ] = FREERTOS_SO_UDPCKSUM_OUT;
                 pxNetworkBuffer->xIPAddress.ulIP_IPv4 = ulIPAddress;
                 pxNetworkBuffer->usPort = ipPACKET_CONTAINS_ICMP_DATA;
-                /* xDataLength is the size of the total packet, including the Ethernet header. */
+                /* xDataLength 是总数据包的大小，包括以太网头。 */
                 pxNetworkBuffer->xDataLength = uxTotalLength;
 
-                /* Send to the stack. */
+                /* 发送到协议栈。 */
                 xStackTxEvent.pvData = pxNetworkBuffer;
 
                 if( xSendEventStructToIPTask( &( xStackTxEvent ), uxBlockTimeTicks ) != pdPASS )
@@ -1366,8 +1293,7 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
         }
         else
         {
-            /* The requested number of bytes will not fit in the available space
-             * in the network buffer. */
+            /* 请求的字节数将无法容纳网络缓冲区中的可用空间。 */
         }
 
         return xReturn;
@@ -1377,11 +1303,11 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Send an event to the IP task. It calls 'xSendEventStructToIPTask' internally.
+ * @brief 向 IP 任务发送事件。它内部调用 'xSendEventStructToIPTask'。
  *
- * @param[in] eEvent The event to be sent.
+ * @param[in] eEvent 要发送的事件。
  *
- * @return pdPASS if the event was sent (or the desired effect was achieved). Else, pdFAIL.
+ * @return 如果事件已发送（或达到了预期效果）则返回 pdPASS。否则返回 pdFAIL。
  */
 BaseType_t xSendEventToIPTask( eIPEvent_t eEvent )
 {
@@ -1396,12 +1322,12 @@ BaseType_t xSendEventToIPTask( eIPEvent_t eEvent )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Send an event (in form of struct) to the IP task to be processed.
+ * @brief 以结构体的形式向 IP 任务发送事件以进行处理。
  *
- * @param[in] pxEvent The event to be sent.
- * @param[in] uxTimeout Timeout for waiting in case the queue is full. 0 for non-blocking calls.
+ * @param[in] pxEvent 要发送的事件。
+ * @param[in] uxTimeout 在队列已满时等待的超时时间。0 表示非阻塞调用。
  *
- * @return pdPASS if the event was sent (or the desired effect was achieved). Else, pdFAIL.
+ * @return 如果事件已发送（或达到了预期效果）则返回 pdPASS。否则返回 pdFAIL。
  */
 BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
                                      TickType_t uxTimeout )
@@ -1411,8 +1337,8 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
 
     if( ( xIPIsNetworkTaskReady() == pdFALSE ) && ( pxEvent->eEventType != eNetworkDownEvent ) )
     {
-        /* Only allow eNetworkDownEvent events if the IP task is not ready
-         * yet.  Not going to attempt to send the message so the send failed. */
+        /* 如果 IP 任务尚未准备好，则只允许 eNetworkDownEvent 事件。
+         * 不打算尝试发送消息，因此发送失败。 */
         xReturn = pdFAIL;
     }
     else
@@ -1423,15 +1349,13 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
         {
             if( pxEvent->eEventType == eTCPTimerEvent )
             {
-                /* TCP timer events are sent to wake the timer task when
-                 * xTCPTimer has expired, but there is no point sending them if the
-                 * IP task is already awake processing other message. */
+                /* TCP 定时器事件被发送以在 xTCPTimer 过期时唤醒定时器任务，
+                 * 但如果 IP 任务已经醒着处理其他消息，则没有必要发送它们。 */
                 vIPSetTCPTimerExpiredState( pdTRUE );
 
                 if( uxQueueMessagesWaiting( xNetworkEventQueue ) != 0U )
                 {
-                    /* Not actually going to send the message but this is not a
-                     * failure as the message didn't need to be sent. */
+                    /* 实际上不会发送消息，但这不是失败，因为不需要发送该消息。 */
                     xSendMessage = pdFALSE;
                 }
             }
@@ -1440,8 +1364,7 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
 
         if( xSendMessage != pdFALSE )
         {
-            /* The IP task cannot block itself while waiting for itself to
-             * respond. */
+            /* IP 任务在等待自己响应时不能阻塞自己。 */
             if( ( xIsCallingFromIPTask() == pdTRUE ) && ( uxUseTimeout > ( TickType_t ) 0U ) )
             {
                 uxUseTimeout = ( TickType_t ) 0;
@@ -1451,15 +1374,14 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
 
             if( xReturn == pdFAIL )
             {
-                /* A message should have been sent to the IP task, but wasn't. */
-                FreeRTOS_debug_printf( ( "xSendEventStructToIPTask: CAN NOT ADD %d\n", pxEvent->eEventType ) );
+                /* 本应向 IP 任务发送消息，但未成功。 */
+                FreeRTOS_debug_printf( ( "xSendEventStructToIPTask: 无法添加 %d\n", pxEvent->eEventType ) );
                 iptraceSTACK_TX_EVENT_LOST( pxEvent->eEventType );
             }
         }
         else
         {
-            /* It was not necessary to send the message to process the event so
-             * even though the message was not sent the call was successful. */
+            /* 没有必要发送消息来处理事件，因此即使消息未发送，调用也是成功的。 */
             xReturn = pdPASS;
         }
     }
@@ -1469,11 +1391,11 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Decide whether this packet should be processed or not based on the IP address in the packet.
+ * @brief 根据数据包中的 IP 地址决定是否应处理此数据包。
  *
- * @param[in] pucEthernetBuffer The ethernet packet under consideration.
+ * @param[in] pucEthernetBuffer 考虑的以太网数据包。
  *
- * @return Enum saying whether to release or to process the packet.
+ * @return 枚举值，指示是释放还是处理该数据包。
  */
 eFrameProcessingResult_t eConsiderFrameForProcessing( const uint8_t * const pucEthernetBuffer )
 {
@@ -1485,123 +1407,123 @@ eFrameProcessingResult_t eConsiderFrameForProcessing( const uint8_t * const pucE
         const NetworkEndPoint_t * pxEndPoint = NULL;
         uint16_t usFrameType;
 
-        /* First, check the packet buffer is non-null. */
+        /* 首先，检查数据包缓冲区是否非空。 */
         if( pucEthernetBuffer == NULL )
         {
-            /* The packet buffer was null - release it. */
+            /* 数据包缓冲区为空 - 释放它。 */
             break;
         }
 
-        /* Map the buffer onto Ethernet Header struct for easy access to fields. */
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+        /* 将缓冲区映射到以太网头结构体，以便轻松访问字段。 */
+        /* MISRA 参考 11.3.1 [未对齐访问] */
+        /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
         /* coverity[misra_c_2012_rule_11_3_violation] */
         pxEthernetHeader = ( ( const EthernetHeader_t * ) pucEthernetBuffer );
         usFrameType = pxEthernetHeader->usFrameType;
 
-        /* Second, filter based on ethernet frame type. */
-        /* The frame type field in the Ethernet header must have a value greater than 0x0600. */
+        /* 其次，基于以太网帧类型进行过滤。 */
+        /* 以太网头中的帧类型字段值必须大于 0x0600。 */
         if( ipIS_ETHERNET_FRAME_TYPE_INVALID( FreeRTOS_ntohs( usFrameType ) ) )
         {
-            /* The packet was not an Ethernet II frame */
+            /* 该数据包不是以太网 II 帧 */
             #if ipconfigIS_ENABLED( ipconfigFILTER_OUT_NON_ETHERNET_II_FRAMES )
-                /* filtering is enabled - release it. */
+                /* 过滤已启用 - 释放它。 */
                 break;
             #else
-                /* filtering is disabled - continue filter checks. */
+                /* 过滤已禁用 - 继续过滤检查。 */
             #endif
         }
         else if( usFrameType == ipARP_FRAME_TYPE )
         {
-            /* The frame is an ARP type */
+            /* 该帧是 ARP 类型 */
             #if ipconfigIS_DISABLED( ipconfigUSE_IPv4 )
-                /* IPv4 is disabled - release it. */
+                /* IPv4 已禁用 - 释放它。 */
                 break;
             #else
-                /*  IPv4 is enabled - Continue filter checks. */
+                /*  IPv4 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( usFrameType == ipIPv4_FRAME_TYPE )
         {
-            /* The frame is an IPv4 type */
+            /* 该帧是 IPv4 类型 */
             #if ipconfigIS_DISABLED( ipconfigUSE_IPv4 )
-                /* IPv4 is disabled - release it. */
+                /* IPv4 已禁用 - 释放它。 */
                 break;
             #else
-                /* IPv4 is enabled - Continue filter checks. */
+                /* IPv4 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( usFrameType == ipIPv6_FRAME_TYPE )
         {
-            /* The frame is an IPv6 type */
+            /* 该帧是 IPv6 类型 */
             #if ipconfigIS_DISABLED( ipconfigUSE_IPv6 )
-                /* IPv6 is disabled - release it. */
+                /* IPv6 已禁用 - 释放它。 */
                 break;
             #else
-                /* IPv6 is enabled - Continue filter checks. */
+                /* IPv6 已启用 - 继续过滤检查。 */
             #endif
         }
         else
         {
-            /* The frame is an unsupported Ethernet II type */
+            /* 该帧是不支持的以太网 II 类型 */
             #if ipconfigIS_ENABLED( ipconfigPROCESS_CUSTOM_ETHERNET_FRAMES )
 
-                /* Processing custom Ethernet frames is enabled. No need for any further testing.
-                 * Accept the frame whether it's a unicast, multicast, or broadcast. */
+                /* 处理自定义以太网帧已启用。无需进一步测试。
+                 * 接受该帧，无论它是单播、多播还是广播。 */
                 eReturn = eProcessBuffer;
             #endif
             break;
         }
 
-        /* Third, filter based on destination mac address. */
+        /* 第三，基于目标 MAC 地址进行过滤。 */
         pxEndPoint = FreeRTOS_FindEndPointOnMAC( &( pxEthernetHeader->xDestinationAddress ), NULL );
 
         if( pxEndPoint != NULL )
         {
-            /* A destination endpoint was found - Continue filter checks. */
+            /* 找到了目标端点 - 继续过滤检查。 */
         }
         else if( memcmp( xBroadcastMACAddress.ucBytes, pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
         {
-            /* The packet was a broadcast - Continue filter checks. */
+            /* 该数据包是广播 - 继续过滤检查。 */
         }
         else if( memcmp( xLLMNR_MacAddress.ucBytes, pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
         {
-            /* The packet is a request for LLMNR using IPv4 */
+            /* 该数据包是使用 IPv4 的 LLMNR 请求 */
             #if ( ipconfigIS_DISABLED( ipconfigUSE_DNS ) || ipconfigIS_DISABLED( ipconfigUSE_LLMNR ) || ipconfigIS_DISABLED( ipconfigUSE_IPv4 ) )
-                /* DNS, LLMNR, or IPv4 is disabled - release it. */
+                /* DNS、LLMNR 或 IPv4 已禁用 - 释放它。 */
                 break;
             #else
-                /* DNS, LLMNR, and IPv4 are enabled - Continue filter checks. */
+                /* DNS、LLMNR 和 IPv4 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( memcmp( xLLMNR_MacAddressIPv6.ucBytes, pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
         {
-            /* The packet is a request for LLMNR using IPv6 */
+            /* 该数据包是使用 IPv6 的 LLMNR 请求 */
             #if ( ipconfigIS_DISABLED( ipconfigUSE_DNS ) || ipconfigIS_DISABLED( ipconfigUSE_LLMNR ) || ipconfigIS_DISABLED( ipconfigUSE_IPv6 ) )
-                /* DNS, LLMNR, or IPv6 is disabled - release it. */
+                /* DNS、LLMNR 或 IPv6 已禁用 - 释放它。 */
                 break;
             #else
-                /* DNS, LLMNR, and IPv6 are enabled - Continue filter checks. */
+                /* DNS、LLMNR 和 IPv6 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( memcmp( xMDNS_MacAddress.ucBytes, pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
         {
-            /* The packet is a request for MDNS using IPv4 */
+            /* 该数据包是使用 IPv4 的 MDNS 请求 */
             #if ( ipconfigIS_DISABLED( ipconfigUSE_DNS ) || ipconfigIS_DISABLED( ipconfigUSE_MDNS ) || ipconfigIS_DISABLED( ipconfigUSE_IPv4 ) )
-                /* DNS, MDNS, or IPv4 is disabled - release it. */
+                /* DNS、MDNS 或 IPv4 已禁用 - 释放它。 */
                 break;
             #else
-                /* DNS, MDNS, and IPv4 are enabled - Continue filter checks. */
+                /* DNS、MDNS 和 IPv4 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( memcmp( xMDNS_MacAddressIPv6.ucBytes, pxEthernetHeader->xDestinationAddress.ucBytes, sizeof( MACAddress_t ) ) == 0 )
         {
-            /* The packet is a request for MDNS using IPv6 */
+            /* 该数据包是使用 IPv6 的 MDNS 请求 */
             #if ( ipconfigIS_DISABLED( ipconfigUSE_DNS ) || ipconfigIS_DISABLED( ipconfigUSE_MDNS ) || ipconfigIS_DISABLED( ipconfigUSE_IPv6 ) )
-                /* DNS, MDNS, or IPv6 is disabled - release it. */
+                /* DNS、MDNS 或 IPv6 已禁用 - 释放它。 */
                 break;
             #else
-                /* DNS, MDNS, and IPv6 are enabled - Continue filter checks. */
+                /* DNS、MDNS 和 IPv6 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( ( pxEthernetHeader->xDestinationAddress.ucBytes[ 0 ] == ipMULTICAST_MAC_ADDRESS_IPv4_0 ) &&
@@ -1609,32 +1531,32 @@ eFrameProcessingResult_t eConsiderFrameForProcessing( const uint8_t * const pucE
                  ( pxEthernetHeader->xDestinationAddress.ucBytes[ 2 ] == ipMULTICAST_MAC_ADDRESS_IPv4_2 ) &&
                  ( pxEthernetHeader->xDestinationAddress.ucBytes[ 3 ] <= 0x7fU ) )
         {
-            /* The packet is an IPv4 Multicast */
+            /* 该数据包是 IPv4 多播 */
             #if ipconfigIS_DISABLED( ipconfigUSE_IPv4 )
-                /* IPv4 is disabled - release it. */
+                /* IPv4 已禁用 - 释放它。 */
                 break;
             #else
-                /* IPv4 is enabled - Continue filter checks. */
+                /* IPv4 已启用 - 继续过滤检查。 */
             #endif
         }
         else if( ( pxEthernetHeader->xDestinationAddress.ucBytes[ 0 ] == ipMULTICAST_MAC_ADDRESS_IPv6_0 ) &&
                  ( pxEthernetHeader->xDestinationAddress.ucBytes[ 1 ] == ipMULTICAST_MAC_ADDRESS_IPv6_1 ) )
         {
-            /* The packet is an IPv6 Multicast */
+            /* 该数据包是 IPv6 多播 */
             #if ipconfigIS_DISABLED( ipconfigUSE_IPv6 )
-                /* IPv6 is disabled - release it. */
+                /* IPv6 已禁用 - 释放它。 */
                 break;
             #else
-                /* IPv6 is enabled - Continue filter checks. */
+                /* IPv6 已启用 - 继续过滤检查。 */
             #endif
         }
         else
         {
-            /* The packet was not a broadcast, or for this node - release it */
+            /* 该数据包不是广播，也不是发往本节点的 - 释放它 */
             break;
         }
 
-        /* All checks have been passed, process the packet. */
+        /* 所有检查均已通过，处理该数据包。 */
         eReturn = eProcessBuffer;
     } while( ipFALSE_BOOL );
 
@@ -1643,68 +1565,66 @@ eFrameProcessingResult_t eConsiderFrameForProcessing( const uint8_t * const pucE
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Process the Ethernet packet.
+ * @brief 处理以太网数据包。
  *
- * @param[in,out] pxNetworkBuffer the network buffer containing the ethernet packet. If the
- *                                 buffer is large enough, it may be reused to send a reply.
+ * @param[in,out] pxNetworkBuffer 包含以太网数据包的网络缓冲区。如果缓冲区足够大，可能会被重用于发送回复。
  */
 static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetworkBuffer )
 {
     const EthernetHeader_t * pxEthernetHeader;
     eFrameProcessingResult_t eReturned = eReleaseBuffer;
 
-    /* Use do{}while(pdFALSE) to allow the use of break; */
+    /* 使用 do{}while(pdFALSE) 以允许使用 break; */
     do
     {
-        /* prvHandleEthernetPacket() already checked for ( pxNetworkBuffer != NULL ) so
-         * it is safe to break out of the do{}while() and let the second half of this
-         * function handle the releasing of pxNetworkBuffer */
+        /* prvHandleEthernetPacket() 已经检查了 ( pxNetworkBuffer != NULL )，
+         * 因此跳出 do{}while() 并让此函数的后半部分处理 pxNetworkBuffer 的释放是安全的 */
 
         if( ( pxNetworkBuffer->pxInterface == NULL ) || ( pxNetworkBuffer->pxEndPoint == NULL ) )
         {
             break;
         }
 
-        /* Beyond this point,
+        /* 在此点之后，
          * ( pxNetworkBuffer != NULL ),
          * ( pxNetworkBuffer->pxInterface != NULL ),
          * ( pxNetworkBuffer->pxEndPoint != NULL ),
-         * Additionally, FreeRTOS_FillEndPoint() and FreeRTOS_FillEndPoint_IPv6() guarantee
-         * that endpoints always have a valid interface assigned to them, and consequently:
+         * 此外，FreeRTOS_FillEndPoint() 和 FreeRTOS_FillEndPoint_IPv6() 保证
+         * 端点始终分配有有效的接口，因此：
          * ( pxNetworkBuffer->pxEndPoint->pxInterface != NULL )
-         * None of the above need to be checked again in code that handles incoming packets. */
+         * 以上各项在处理传入数据包的代码中都不需要再次检查。 */
 
         iptraceNETWORK_INTERFACE_INPUT( pxNetworkBuffer->xDataLength, pxNetworkBuffer->pucEthernetBuffer );
 
-        /* Interpret the Ethernet frame. */
+        /* 解析以太网帧。 */
         if( pxNetworkBuffer->xDataLength < sizeof( EthernetHeader_t ) )
         {
             break;
         }
 
-        /* Map the buffer onto the Ethernet Header struct for easy access to the fields. */
+        /* 将缓冲区映射到以太网头结构体，以便轻松访问字段。 */
 
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+        /* MISRA 参考 11.3.1 [未对齐访问] */
+        /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
         /* coverity[misra_c_2012_rule_11_3_violation] */
         pxEthernetHeader = ( ( const EthernetHeader_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
-        /* The condition "eReturned == eProcessBuffer" must be true. */
+        /* 条件 "eReturned == eProcessBuffer" 必须为真。 */
         #if ( ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES == 0 )
             if( eConsiderFrameForProcessing( pxNetworkBuffer->pucEthernetBuffer ) == eProcessBuffer )
         #endif
         {
-            /* Interpret the received Ethernet packet. */
+            /* 解析接收到的以太网数据包。 */
             switch( pxEthernetHeader->usFrameType )
             {
                 #if ( ipconfigUSE_IPv4 != 0 )
                     case ipARP_FRAME_TYPE:
 
-                        /* The Ethernet frame contains an ARP packet. */
+                        /* 以太网帧包含 ARP 数据包。 */
                         if( pxNetworkBuffer->xDataLength >= sizeof( ARPPacket_t ) )
                         {
-                            /* MISRA Ref 11.3.1 [Misaligned access] */
-                            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                            /* MISRA 参考 11.3.1 [未对齐访问] */
+                            /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
                             /* coverity[misra_c_2012_rule_11_3_violation] */
                             eReturned = eARPProcessPacket( pxNetworkBuffer );
                         }
@@ -1718,11 +1638,11 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
                 case ipIPv4_FRAME_TYPE:
                 case ipIPv6_FRAME_TYPE:
 
-                    /* The Ethernet frame contains an IP packet. */
+                    /* 以太网帧包含 IP 数据包。 */
                     if( pxNetworkBuffer->xDataLength >= sizeof( IPPacket_t ) )
                     {
-                        /* MISRA Ref 11.3.1 [Misaligned access] */
-                        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                        /* MISRA 参考 11.3.1 [未对齐访问] */
+                        /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
                         /* coverity[misra_c_2012_rule_11_3_violation] */
                         eReturned = prvProcessIPPacket( ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer ), pxNetworkBuffer );
                     }
@@ -1735,10 +1655,10 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
 
                 default:
                     #if ( ipconfigPROCESS_CUSTOM_ETHERNET_FRAMES != 0 )
-                        /* Custom frame handler. */
+                        /* 自定义帧处理程序。 */
                         eReturned = eApplicationProcessCustomFrameHook( pxNetworkBuffer );
                     #else
-                        /* No other packet types are handled.  Nothing to do. */
+                        /* 不处理其他数据包类型。无事可做。 */
                         eReturned = eReleaseBuffer;
                     #endif
                     break;
@@ -1746,24 +1666,20 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
         }
     } while( pdFALSE );
 
-    /* Perform any actions that resulted from processing the Ethernet frame. */
+    /* 执行由处理以太网帧产生的任何操作。 */
     switch( eReturned )
     {
         case eReturnEthernetFrame:
 
-            /* The Ethernet frame will have been updated (maybe it was
-             * a resolution request or a PING request?) and should be sent back to
-             * its source. */
+            /* 以太网帧已更新（可能是解析请求或 PING 请求？），应将其发送回源地址。 */
             vReturnEthernetFrame( pxNetworkBuffer, pdTRUE );
 
-            /* parameter pdTRUE: the buffer must be released once
-             * the frame has been transmitted */
+            /* 参数 pdTRUE：帧传输后必须释放缓冲区 */
             break;
 
         case eFrameConsumed:
 
-            /* The frame is in use somewhere, don't release the buffer
-             * yet. */
+            /* 该帧正在某处使用，暂不要释放缓冲区。 */
             break;
 
         case eWaitingResolution:
@@ -1781,7 +1697,7 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
                     else
                 #endif /* if ipconfigIS_ENABLED( ipconfigUSE_IPv4 ) */
                 {
-                    /* We are already waiting on one resolution. This frame will be dropped. */
+                    /* 我们已经在等待一个解析。此帧将被丢弃。 */
                     vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
 
                     iptraceDELAYED_ARP_BUFFER_FULL();
@@ -1802,7 +1718,7 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
                     else
                 #endif /* if ipconfigIS_ENABLED( ipconfigUSE_IPv6 ) */
                 {
-                    /* We are already waiting on one resolution. This frame will be dropped. */
+                    /* 我们已经在等待一个解析。此帧将被丢弃。 */
                     vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
 
                     iptraceDELAYED_ND_BUFFER_FULL();
@@ -1812,7 +1728,7 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
             }
             else
             {
-                /* Unknown frame type, drop the packet. */
+                /* 未知的帧类型，丢弃数据包。 */
                 vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
             }
 
@@ -1822,9 +1738,7 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
         case eProcessBuffer:
         default:
 
-            /* The frame is not being used anywhere, and the
-             * NetworkBufferDescriptor_t structure containing the frame should
-             * just be released back to the list of free buffers. */
+            /* 该帧未在任何地方使用，包含该帧的 NetworkBufferDescriptor_t 结构应该直接释放回空闲缓冲区列表。 */
             vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
             break;
     }
@@ -1832,20 +1746,19 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Check the sizes of the UDP packet and forward it to the UDP module
- *        ( xProcessReceivedUDPPacket() )
- * @param[in] pxNetworkBuffer The network buffer containing the UDP packet.
- * @return eReleaseBuffer ( please release the buffer ).
- *         eFrameConsumed ( the buffer has now been released ).
+ * @brief 检查 UDP 数据包的大小并将其转发到 UDP 模块 ( xProcessReceivedUDPPacket() )
+ * @param[in] pxNetworkBuffer 包含 UDP 数据包的网络缓冲区。
+ * @return eReleaseBuffer (请释放缓冲区)。
+ *         eFrameConsumed (缓冲区现已释放)。
  */
 
 static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t * const pxNetworkBuffer )
 {
     eFrameProcessingResult_t eReturn = eReleaseBuffer;
     BaseType_t xIsWaitingResolution = pdFALSE;
-    /* The IP packet contained a UDP frame. */
-    /* MISRA Ref 11.3.1 [Misaligned access] */
-    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+    /* IP 数据包包含一个 UDP 帧。 */
+    /* MISRA 参考 11.3.1 [未对齐访问] */
+    /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
     /* coverity[misra_c_2012_rule_11_3_violation] */
     const UDPPacket_t * pxUDPPacket = ( ( UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
     const UDPHeader_t * pxUDPHeader = &( pxUDPPacket->xUDPHeader );
@@ -1859,8 +1772,8 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
         {
             const ProtocolHeaders_t * pxProtocolHeaders;
 
-            /* MISRA Ref 11.3.1 [Misaligned access] */
-            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+            /* MISRA 参考 11.3.1 [未对齐访问] */
+            /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
             /* coverity[misra_c_2012_rule_11_3_violation] */
             pxProtocolHeaders = ( ( ProtocolHeaders_t * ) &( pxNetworkBuffer->pucEthernetBuffer[ ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv6_HEADER ] ) );
             pxUDPHeader = &( pxProtocolHeaders->xUDPHeader );
@@ -1870,9 +1783,7 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
     usLength = FreeRTOS_ntohs( pxUDPHeader->usLength );
     uxLength = ( size_t ) usLength;
 
-    /* Note the header values required prior to the checksum
-     * generation as the checksum pseudo header may clobber some of
-     * these values. */
+    /* 请注意，在校验和生成之前所需的头部值，因为校验和伪头部可能会破坏其中一些值。 */
     #if ( ipconfigUSE_IPv4 != 0 )
         if( ( pxUDPPacket->xEthernetHeader.usFrameType == ipIPv4_FRAME_TYPE ) &&
             ( usLength > ( FreeRTOS_ntohs( pxUDPPacket->xIPHeader.usLength ) - uxIPHeaderSizePacket( pxNetworkBuffer ) ) ) )
@@ -1887,14 +1798,10 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
     {
         size_t uxPayloadSize_1, uxPayloadSize_2;
 
-        /* Ensure that downstream UDP packet handling has the lesser
-         * of: the actual network buffer Ethernet frame length, or
-         * the sender's UDP packet header payload length, minus the
-         * size of the UDP header.
+        /* 确保下游 UDP 数据包处理使用以下两者中较小的一个：
+         * 实际网络缓冲区以太网帧长度，或发送方 UDP 包头负载长度减去 UDP 头的大小。
          *
-         * The size of the UDP packet structure in this implementation
-         * includes the size of the Ethernet header, the size of
-         * the IP header, and the size of the UDP header. */
+         * 此实现中的 UDP 数据包结构大小包括以太网头的大小、IP 头的大小和 UDP 头的大小。 */
         uxPayloadSize_1 = pxNetworkBuffer->xDataLength - uxMinSize;
         uxPayloadSize_2 = uxLength - ipSIZE_OF_UDP_HEADER;
 
@@ -1907,11 +1814,9 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
         pxNetworkBuffer->xIPAddress.ulIP_IPv4 = pxUDPPacket->xIPHeader.ulSourceIPAddress;
 
         /* ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM:
-         * In some cases, the upper-layer checksum has been calculated
-         * by the NIC driver. */
+         * 在某些情况下，上层校验和已由 NIC 驱动程序计算。 */
 
-        /* Pass the packet payload to the UDP sockets
-         * implementation. */
+        /* 将数据包负载传递给 UDP 套接字实现。 */
         if( xProcessReceivedUDPPacket( pxNetworkBuffer,
                                        pxUDPHeader->usDestinationPort,
                                        &( xIsWaitingResolution ) ) == pdPASS )
@@ -1920,7 +1825,7 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
         }
         else
         {
-            /* Is this packet to be set aside for resolution. */
+            /* 此数据包是否要搁置等待解析。 */
             if( xIsWaitingResolution == pdTRUE )
             {
                 eReturn = eWaitingResolution;
@@ -1929,7 +1834,7 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
     }
     else
     {
-        /* Length checks failed, the buffer will be released. */
+        /* 长度检查失败，缓冲区将被释放。 */
     }
 
     return eReturn;
@@ -1937,12 +1842,12 @@ static eFrameProcessingResult_t prvProcessUDPPacket( NetworkBufferDescriptor_t *
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Process an IP-packet.
+ * @brief 处理一个 IP 数据包。
  *
- * @param[in] pxIPPacket The IP packet to be processed.
- * @param[in] pxNetworkBuffer The networkbuffer descriptor having the IP packet.
+ * @param[in] pxIPPacket 要处理的 IP 数据包。
+ * @param[in] pxNetworkBuffer 具有 IP 数据包的网络缓冲区描述符。
  *
- * @return An enum to show whether the packet should be released/kept/processed etc.
+ * @return 一个枚举值，用于指示数据包应被释放/保留/处理等。
  */
 static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacket,
                                                     NetworkBufferDescriptor_t * const pxNetworkBuffer )
@@ -1966,26 +1871,26 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                 if( pxNetworkBuffer->xDataLength < sizeof( IPPacket_IPv6_t ) )
                 {
-                    /* The packet size is less than minimum IPv6 packet. */
+                    /* 数据包大小小于最小 IPv6 数据包。 */
                     eReturn = eReleaseBuffer;
                 }
                 else
                 {
-                    /* MISRA Ref 11.3.1 [Misaligned access] */
-                    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                    /* MISRA 参考 11.3.1 [未对齐访问] */
+                    /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
                     /* coverity[misra_c_2012_rule_11_3_violation] */
                     pxIPHeader_IPv6 = ( ( const IPHeader_IPv6_t * ) &( pxNetworkBuffer->pucEthernetBuffer[ ipSIZE_OF_ETH_HEADER ] ) );
 
                     uxHeaderLength = ipSIZE_OF_IPv6_HEADER;
                     ucProtocol = pxIPHeader_IPv6->ucNextHeader;
-                    /* MISRA Ref 11.3.1 [Misaligned access] */
-                    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                    /* MISRA 参考 11.3.1 [未对齐访问] */
+                    /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
                     /* coverity[misra_c_2012_rule_11_3_violation] */
                     eReturn = prvAllowIPPacketIPv6( ( ( const IPHeader_IPv6_t * ) &( pxIPPacket->xIPHeader ) ), pxNetworkBuffer, uxHeaderLength );
 
-                    /* The IP-header type is copied to a special reserved location a few bytes before the message
-                     * starts. In the case of IPv6, this value is never actually used and the line below can safely be removed
-                     * with no ill effects. We only store it to help with debugging. */
+                    /* IP 头类型被复制到消息开始前几个字节的一个特殊保留位置。
+                     * 在 IPv6 的情况下，此值实际上从未被使用，下面的行可以安全地删除而不会产生不良影响。
+                     * 我们只存储它以帮助调试。 */
                     pxNetworkBuffer->pucEthernetBuffer[ 0 - ( BaseType_t ) ipIP_TYPE_OFFSET ] = pxIPHeader_IPv6->ucVersionTrafficClass;
                 }
                 break;
@@ -1996,9 +1901,8 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                {
                    size_t uxLength = ( size_t ) pxIPHeader->ucVersionHeaderLength;
 
-                   /* Check if the IP headers are acceptable and if it has our destination.
-                    * The lowest four bits of 'ucVersionHeaderLength' indicate the IP-header
-                    * length in multiples of 4. */
+                   /* 检查 IP 头是否可接受以及它是否有我们的目的地。
+                    * 'ucVersionHeaderLength' 的最低四位表示以 4 倍数计的 IP 头长度。 */
                    uxHeaderLength = ( size_t ) ( ( uxLength & 0x0FU ) << 2 );
 
                    if( ( uxHeaderLength > ( pxNetworkBuffer->xDataLength - ipSIZE_OF_ETH_HEADER ) ) ||
@@ -2009,13 +1913,12 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                    else
                    {
                        ucProtocol = pxIPPacket->xIPHeader.ucProtocol;
-                       /* Check if the IP headers are acceptable and if it has our destination. */
+                       /* 检查 IP 头是否可接受以及它是否有我们的目的地。 */
                        eReturn = prvAllowIPPacketIPv4( pxIPPacket, pxNetworkBuffer, uxHeaderLength );
 
                        {
-                           /* The IP-header type is copied to a special reserved location a few bytes before the
-                            * messages starts.  It might be needed later on when a UDP-payload
-                            * buffer is being used. */
+                           /* IP 头类型被复制到消息开始前几个字节的一个特殊保留位置。
+                            * 稍后在使用 UDP 负载缓冲区时可能需要它。 */
                            pxNetworkBuffer->pucEthernetBuffer[ 0 - ( BaseType_t ) ipIP_TYPE_OFFSET ] = pxIPHeader->ucVersionHeaderLength;
                        }
                    }
@@ -2026,19 +1929,19 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
         default:
             eReturn = eReleaseBuffer;
-            FreeRTOS_debug_printf( ( "prvProcessIPPacket: Undefined Frame Type \n" ) );
-            /* MISRA 16.4 Compliance */
+            FreeRTOS_debug_printf( ( "prvProcessIPPacket: 未定义的帧类型 \n" ) );
+            /* MISRA 16.4 合规性 */
             break;
     }
 
-    /* MISRA Ref 14.3.1 [Configuration dependent invariant] */
-    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-143 */
+    /* MISRA 参考 14.3.1 [配置相关的不变量] */
+    /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-143 */
     /* coverity[misra_c_2012_rule_14_3_violation] */
     /* coverity[cond_const] */
     if( eReturn == eProcessBuffer )
     {
-        /* Are there IP-options. */
-        /* Case default is never toggled because eReturn is not eProcessBuffer in previous step. */
+        /* 是否有 IP 选项。 */
+        /* 默认情况永远不会触发，因为在上一步中 eReturn 不是 eProcessBuffer。 */
         switch( pxIPPacket->xEthernetHeader.usFrameType ) /* LCOV_EXCL_BR_LINE */
         {
             #if ( ipconfigUSE_IPv4 != 0 )
@@ -2046,8 +1949,7 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                     if( uxHeaderLength > ipSIZE_OF_IPv4_HEADER )
                     {
-                        /* The size of the IP-header is larger than 20 bytes.
-                         * The extra space is used for IP-options. */
+                        /* IP 头的大小大于 20 字节。额外的空间用于 IP 选项。 */
                         eReturn = prvCheckIP4HeaderOptions( pxNetworkBuffer );
                     }
                     break;
@@ -2062,28 +1964,26 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                         if( eReturn != eReleaseBuffer )
                         {
-                            /* Ignore warning for `pxIPHeader_IPv6`. */
+                            /* 忽略 `pxIPHeader_IPv6` 的警告。 */
                             ucProtocol = pxIPHeader_IPv6->ucNextHeader;
                         }
                     }
                     break;
             #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
-            /* Case default is never toggled because eReturn is not eProcessBuffer in previous step. */
+            /* 默认情况永远不会触发，因为在上一步中 eReturn 不是 eProcessBuffer。 */
             default:   /* LCOV_EXCL_LINE */
-                /* MISRA 16.4 Compliance */
+                /* MISRA 16.4 合规性 */
                 break; /* LCOV_EXCL_LINE */
         }
 
-        /* MISRA Ref 14.3.1 [Configuration dependent invariant] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-143 */
+        /* MISRA 参考 14.3.1 [配置相关的不变量] */
+        /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-143 */
         /* coverity[misra_c_2012_rule_14_3_violation] */
         /* coverity[const] */
         if( eReturn != eReleaseBuffer )
         {
-            /* Add the IP and MAC addresses to the cache if they are not
-             * already there - otherwise refresh the age of the existing
-             * entry. */
+            /* 将 IP 和 MAC 地址添加到缓存中（如果它们尚未存在），否则刷新现有条目的生存期。 */
             if( ucProtocol != ( uint8_t ) ipPROTOCOL_UDP )
             {
                 if( xCheckRequiresResolution( pxNetworkBuffer ) == pdTRUE )
@@ -2092,12 +1992,10 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                 }
                 else
                 {
-                    /* Refresh the cache with the IP/MAC-address of the received
-                     * packet.  For UDP packets, this will be done later in
-                     * xProcessReceivedUDPPacket(), as soon as it's know that the message
-                     * will be handled.  This will prevent the cache getting
-                     * overwritten with the IP address of useless broadcast packets. */
-                    /* Case default is never toggled because eReturn is not eProcessBuffer in previous step. */
+                    /* 用接收到的数据包的 IP/MAC 地址刷新缓存。对于 UDP 数据包，
+                     * 这将在 xProcessReceivedUDPPacket() 中稍后完成，一旦知道消息将被处理。
+                     * 这将防止缓存被无用的广播数据包的 IP 地址覆盖。 */
+                    /* 默认情况永远不会触发，因为在上一步中 eReturn 不是 eProcessBuffer。 */
                     switch( pxIPPacket->xEthernetHeader.usFrameType ) /* LCOV_EXCL_BR_LINE */
                     {
                         #if ( ipconfigUSE_IPv6 != 0 )
@@ -2108,14 +2006,14 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                         #if ( ipconfigUSE_IPv4 != 0 )
                             case ipIPv4_FRAME_TYPE:
-                                /* Refresh the age of this cache entry since a packet was received. */
+                                /* 因为接收到了数据包，所以刷新此缓存条目的生存期。 */
                                 vARPRefreshCacheEntryAge( &( pxIPPacket->xEthernetHeader.xSourceAddress ), pxIPHeader->ulSourceIPAddress );
                                 break;
                         #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
-                        /* Case default is never toggled because eReturn is not eProcessBuffer in previous step. */
+                        /* 默认情况永远不会触发，因为在上一步中 eReturn 不是 eProcessBuffer。 */
                         default:   /* LCOV_EXCL_LINE */
-                            /* MISRA 16.4 Compliance */
+                            /* MISRA 16.4 合规性 */
                             break; /* LCOV_EXCL_LINE */
                     }
                 }
@@ -2128,11 +2026,9 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                     #if ( ipconfigUSE_IPv4 != 0 )
                         case ipPROTOCOL_ICMP:
 
-                            /* The IP packet contained an ICMP frame.  Don't bother checking
-                             * the ICMP checksum, as if it is wrong then the wrong data will
-                             * also be returned, and the source of the ping will know something
-                             * went wrong because it will not be able to validate what it
-                             * receives. */
+                            /* IP 数据包包含 ICMP 帧。不必费心检查 ICMP 校验和，
+                             * 因为如果它错了，返回的数据也会错，ping 的源头将知道出了问题，
+                             * 因为它将无法验证其接收到的内容。 */
                             #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
                             {
                                 eReturn = ProcessICMPPacket( pxNetworkBuffer );
@@ -2148,7 +2044,7 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                     #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
                     case ipPROTOCOL_UDP:
-                        /* The IP packet contained a UDP frame. */
+                        /* IP 数据包包含 UDP 帧。 */
 
                         eReturn = prvProcessUDPPacket( pxNetworkBuffer );
                         break;
@@ -2163,7 +2059,7 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                                 break;
                         #endif /* if ipconfigUSE_TCP == 1 */
                     default:
-                        /* Not a supported frame type. */
+                        /* 不支持的帧类型。 */
                         eReturn = eReleaseBuffer;
                         break;
                 }
@@ -2176,14 +2072,13 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
 /*-----------------------------------------------------------*/
 
-/* This function is used in other files, has external linkage e.g. in
- * FreeRTOS_DNS.c. Not to be made static. */
+/* 此函数在其他文件中使用，具有外部链接，例如在 FreeRTOS_DNS.c 中。不能设为静态。 */
 
 /**
- * @brief Send the Ethernet frame after checking for some conditions.
+ * @brief 在检查某些条件后发送以太网帧。
  *
- * @param[in,out] pxNetworkBuffer The network buffer which is to be sent.
- * @param[in] xReleaseAfterSend Whether this network buffer is to be released or not.
+ * @param[in,out] pxNetworkBuffer 要发送的网络缓冲区。
+ * @param[in] xReleaseAfterSend 是否在发送后释放此网络缓冲区。
  */
 void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
                            BaseType_t xReleaseAfterSend )
@@ -2198,7 +2093,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
         {
             BaseType_t xIndex;
 
-            FreeRTOS_printf( ( "vReturnEthernetFrame: length %u\n", ( unsigned ) pxNetworkBuffer->xDataLength ) );
+            FreeRTOS_printf( ( "vReturnEthernetFrame: 长度 %u\n", ( unsigned ) pxNetworkBuffer->xDataLength ) );
 
             for( xIndex = ( BaseType_t ) pxNetworkBuffer->xDataLength; xIndex < ( BaseType_t ) ipconfigETHERNET_MINIMUM_PACKET_BYTES; xIndex++ )
             {
@@ -2218,7 +2113,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
             if( pxNewBuffer != NULL )
             {
                 xReleaseAfterSend = pdTRUE;
-                /* Want no rounding up. */
+                /* 不希望向上取整。 */
                 pxNewBuffer->xDataLength = pxNetworkBuffer->xDataLength;
             }
 
@@ -2228,11 +2123,11 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
         if( pxNetworkBuffer != NULL )
     #endif /* if ( ipconfigZERO_COPY_TX_DRIVER != 0 ) */
     {
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+        /* MISRA 参考 11.3.1 [未对齐访问] */
+        /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
         /* coverity[misra_c_2012_rule_11_3_violation] */
         IPPacket_t * pxIPPacket = ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
-        /* memcpy() helper variables for MISRA Rule 21.15 compliance*/
+        /* memcpy() 辅助变量，用于符合 MISRA 规则 21.15 */
         const void * pvCopySource = NULL;
         void * pvCopyDest;
 
@@ -2242,20 +2137,20 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
             uint32_t ulDestinationIPAddress = 0U;
         #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
-        /* Send! */
+        /* 发送！ */
         if( pxNetworkBuffer->pxEndPoint == NULL )
         {
-            /* _HT_ I wonder if this ad-hoc search of an end-point it necessary. */
-            FreeRTOS_printf( ( "vReturnEthernetFrame: No pxEndPoint yet for %x ip?\n", ( unsigned int ) FreeRTOS_ntohl( pxIPPacket->xIPHeader.ulDestinationIPAddress ) ) );
+            /* _HT_ 我想知道这种临时的端点搜索是否有必要。 */
+            FreeRTOS_printf( ( "vReturnEthernetFrame: %x ip 还没有 pxEndPoint？\n", ( unsigned int ) FreeRTOS_ntohl( pxIPPacket->xIPHeader.ulDestinationIPAddress ) ) );
 
-            /* MISRA Ref 11.3.1 [Misaligned access] */
-            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+            /* MISRA 参考 11.3.1 [未对齐访问] */
+            /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
             /* coverity[misra_c_2012_rule_11_3_violation] */
             switch( ( ( ( EthernetHeader_t * ) pxNetworkBuffer->pucEthernetBuffer ) )->usFrameType )
             {
                 #if ( ipconfigUSE_IPv6 != 0 )
                     case ipIPv6_FRAME_TYPE:
-                        /* No IPv6 endpoint found */
+                        /* 未找到 IPv6 端点 */
                         break;
                 #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
@@ -2266,34 +2161,33 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
                 #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
                 default:
-                    /* MISRA 16.4 Compliance */
+                    /* MISRA 16.4 合规性 */
                     break;
             }
         }
 
         if( pxNetworkBuffer->pxEndPoint != NULL )
         {
-            NetworkInterface_t * pxInterface = pxNetworkBuffer->pxEndPoint->pxNetworkInterface; /*_RB_ Why not use the pxNetworkBuffer->pxNetworkInterface directly? */
+            NetworkInterface_t * pxInterface = pxNetworkBuffer->pxEndPoint->pxNetworkInterface; /*_RB_ 为什么不直接使用 pxNetworkBuffer->pxNetworkInterface？ */
 
-            /* Interpret the Ethernet packet being sent. */
+            /* 解析正在发送的以太网数据包。 */
             switch( pxIPPacket->xEthernetHeader.usFrameType )
             {
                 #if ( ipconfigUSE_IPv4 != 0 )
                     case ipIPv4_FRAME_TYPE:
                         ulDestinationIPAddress = pxIPPacket->xIPHeader.ulDestinationIPAddress;
 
-                        /* Try to find a MAC address corresponding to the destination IP
-                         * address. */
+                        /* 尝试查找与目标 IP 地址对应的 MAC 地址。 */
                         eResult = eARPGetCacheEntry( &ulDestinationIPAddress, &xMACAddress, &( pxNetworkBuffer->pxEndPoint ) );
 
                         if( eResult == eResolutionCacheHit )
                         {
-                            /* Best case scenario - an address is found, use it. */
+                            /* 最好的情况 - 找到了地址，使用它。 */
                             pvCopySource = &xMACAddress;
                         }
                         else
                         {
-                            /* If an address is not found, just swap the source and destination MAC addresses. */
+                            /* 如果未找到地址，只需交换源和目标 MAC 地址。 */
                             pvCopySource = &( pxIPPacket->xEthernetHeader.xSourceAddress );
                         }
                         break;
@@ -2302,15 +2196,13 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
                 case ipIPv6_FRAME_TYPE:
                 case ipARP_FRAME_TYPE:
                 default:
-                    /* Just swap the source and destination MAC addresses. */
+                    /* 只需交换源和目标 MAC 地址。 */
                     pvCopySource = &( pxIPPacket->xEthernetHeader.xSourceAddress );
                     break;
             }
 
             /*
-             * Use helper variables for memcpy() to remain
-             * compliant with MISRA Rule 21.15.  These should be
-             * optimized away.
+             * 使用 memcpy() 的辅助变量以符合 MISRA 规则 21.15。这些应该会被优化掉。
              */
             pvCopyDest = &( pxIPPacket->xEthernetHeader.xDestinationAddress );
             ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( pxIPPacket->xEthernetHeader.xDestinationAddress ) );
@@ -2319,7 +2211,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
             pvCopyDest = &( pxIPPacket->xEthernetHeader.xSourceAddress );
             ( void ) memcpy( pvCopyDest, pvCopySource, ( size_t ) ipMAC_ADDRESS_LENGTH_BYTES );
 
-            /* Send! */
+            /* 发送！ */
             if( xIsCallingFromIPTask() == pdTRUE )
             {
                 iptraceNETWORK_INTERFACE_OUTPUT( pxNetworkBuffer->xDataLength, pxNetworkBuffer->pucEthernetBuffer );
@@ -2329,19 +2221,19 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
             {
                 IPStackEvent_t xSendEvent;
 
-                /* Send a message to the IP-task to send this packet. */
+                /* 向 IP 任务发送消息以发送此数据包。 */
                 xSendEvent.eEventType = eNetworkTxEvent;
                 xSendEvent.pvData = pxNetworkBuffer;
 
                 if( xSendEventStructToIPTask( &xSendEvent, ( TickType_t ) portMAX_DELAY ) == pdFAIL )
                 {
-                    /* Failed to send the message, so release the network buffer. */
+                    /* 发送消息失败，因此释放网络缓冲区。 */
                     vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
                 }
             }
             else
             {
-                /* This should never reach or the packet is gone. */
+                /* 这永远不应到达，或者数据包已经丢失。 */
                 configASSERT( pdFALSE );
             }
         }
@@ -2352,9 +2244,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 #if ( ipconfigUSE_IPv4 != 0 )
 
 /**
- * @brief Returns the IP address of the NIC.
+ * @brief 返回网卡 (NIC) 的 IP 地址。
  *
- * @return The IP address of the NIC.
+ * @return 网卡的 IP 地址。
  */
     uint32_t FreeRTOS_GetIPAddress( void )
     {
@@ -2370,7 +2262,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
                      pxEndPoint != NULL;
                      pxEndPoint = FreeRTOS_NextEndPoint( NULL, pxEndPoint ) )
                 {
-                    /* Break if the endpoint is IPv4. */
+                    /* 如果端点是 IPv4 则跳出。 */
                     if( pxEndPoint->bits.bIPv6 == 0U )
                     {
                         break;
@@ -2379,7 +2271,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
             }
         #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
-        /* Returns the IP address of the NIC. */
+        /* 返回网卡的 IP 地址。 */
         if( pxEndPoint == NULL )
         {
             ulIPAddress = 0U;
@@ -2402,18 +2294,17 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) && ( ipconfigUSE_IPv4 != 0 )
 
 /*
- * The helper functions here below assume that there is a single
- * interface and a single end-point (ipconfigIPv4_BACKWARD_COMPATIBLE)
+ * 下面的辅助函数假设只有一个接口和一个端点 (ipconfigIPv4_BACKWARD_COMPATIBLE)
  */
 
 /**
- * @brief Sets the IP address of the NIC.
+ * @brief 设置网卡的 IP 地址。
  *
- * @param[in] ulIPAddress IP address of the NIC to be set.
+ * @param[in] ulIPAddress 要设置的网卡的 IP 地址。
  */
     void FreeRTOS_SetIPAddress( uint32_t ulIPAddress )
     {
-        /* Sets the IP address of the NIC. */
+        /* 设置网卡的 IP 地址。 */
         NetworkEndPoint_t * pxEndPoint = FreeRTOS_FirstEndPoint( NULL );
 
         if( pxEndPoint != NULL )
@@ -2424,10 +2315,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the gateway address of the subnet.
+ * @brief 获取子网的网关地址。
  *
- * @return The IP-address of the gateway, zero if a gateway is
- *         not used/defined.
+ * @return 网关的 IP 地址，如果未使用/定义网关则为零。
  */
     uint32_t FreeRTOS_GetGatewayAddress( void )
     {
@@ -2444,9 +2334,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the DNS server address.
+ * @brief 获取 DNS 服务器地址。
  *
- * @return The IP address of the DNS server.
+ * @return DNS 服务器的 IP 地址。
  */
     uint32_t FreeRTOS_GetDNSServerAddress( void )
     {
@@ -2463,9 +2353,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the netmask for the subnet.
+ * @brief 获取子网的子网掩码。
  *
- * @return The 32 bit netmask for the subnet.
+ * @return 子网的 32 位子网掩码。
  */
     uint32_t FreeRTOS_GetNetmask( void )
     {
@@ -2482,9 +2372,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Update the MAC address.
+ * @brief 更新 MAC 地址。
  *
- * @param[in] ucMACAddress the MAC address to be set.
+ * @param[in] ucMACAddress 要设置的 MAC 地址。
  */
     void FreeRTOS_UpdateMACAddress( const uint8_t ucMACAddress[ ipMAC_ADDRESS_LENGTH_BYTES ] )
     {
@@ -2492,16 +2382,16 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 
         if( pxEndPoint != NULL )
         {
-            /* Copy the MAC address at the start of the default packet header fragment. */
+            /* 在默认数据包头片段的开头复制 MAC 地址。 */
             ( void ) memcpy( pxEndPoint->xMACAddress.ucBytes, ( const void * ) ucMACAddress, ( size_t ) ipMAC_ADDRESS_LENGTH_BYTES );
         }
     }
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the MAC address.
+ * @brief 获取 MAC 地址。
  *
- * @return The pointer to MAC address.
+ * @return 指向 MAC 地址的指针。
  */
     const uint8_t * FreeRTOS_GetMACAddress( void )
     {
@@ -2510,7 +2400,7 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 
         if( pxEndPoint != NULL )
         {
-            /* Copy the MAC address at the start of the default packet header fragment. */
+            /* 在默认数据包头片段的开头复制 MAC 地址。 */
             pucReturn = pxEndPoint->xMACAddress.ucBytes;
         }
 
@@ -2519,9 +2409,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Set the netmask for the subnet.
+ * @brief 设置子网的子网掩码。
  *
- * @param[in] ulNetmask The 32 bit netmask of the subnet.
+ * @param[in] ulNetmask 子网的 32 位子网掩码。
  */
     void FreeRTOS_SetNetmask( uint32_t ulNetmask )
     {
@@ -2535,9 +2425,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Set the gateway address.
+ * @brief 设置网关地址。
  *
- * @param[in] ulGatewayAddress The gateway address.
+ * @param[in] ulGatewayAddress 网关地址。
  */
     void FreeRTOS_SetGatewayAddress( uint32_t ulGatewayAddress )
     {
@@ -2552,9 +2442,9 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
 #endif /* if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )  && ( ipconfigUSE_IPv4 != 0 ) */
 
 /**
- * @brief Returns whether the IP task is ready.
+ * @brief 返回 IP 任务是否就绪。
  *
- * @return pdTRUE if IP task is ready, else pdFALSE.
+ * @return 如果 IP 任务就绪则返回 pdTRUE，否则返回 pdFALSE。
  */
 BaseType_t xIPIsNetworkTaskReady( void )
 {
@@ -2563,22 +2453,21 @@ BaseType_t xIPIsNetworkTaskReady( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Returns whether all end-points are up.
+ * @brief 返回是否所有端点都已启用。
  *
- * @return pdTRUE if all defined end-points are up.
+ * @return 如果所有定义的端点都已启用则返回 pdTRUE。
  */
 BaseType_t FreeRTOS_IsNetworkUp( void )
 {
-    /* IsNetworkUp() is kept for backward compatibility. */
+    /* IsNetworkUp() 保留是为了向后兼容。 */
     return FreeRTOS_IsEndPointUp( NULL );
 }
 /*-----------------------------------------------------------*/
 
 /**
- * @brief The variable 'xNetworkDownEventPending' is declared static.  This function
- *        gives read-only access to it.
+ * @brief 变量 'xNetworkDownEventPending' 被声明为静态。此函数提供对其的只读访问。
  *
- * @return pdTRUE if there a network-down event pending. pdFALSE otherwise.
+ * @return 如果有挂起的网络断开事件则返回 pdTRUE。否则返回 pdFALSE。
  */
 BaseType_t xIsNetworkDownEventPending( void )
 {
@@ -2587,9 +2476,9 @@ BaseType_t xIsNetworkDownEventPending( void )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Returns whether a particular end-point is up.
+ * @brief 返回特定端点是否已启用。
  *
- * @return pdTRUE if a particular end-points is up.
+ * @return 如果特定端点已启用则返回 pdTRUE。
  */
 BaseType_t FreeRTOS_IsEndPointUp( const struct xNetworkEndPoint * pxEndPoint )
 {
@@ -2597,12 +2486,12 @@ BaseType_t FreeRTOS_IsEndPointUp( const struct xNetworkEndPoint * pxEndPoint )
 
     if( pxEndPoint != NULL )
     {
-        /* Is this particular end-point up? */
+        /* 这个特定的端点是否已启用？ */
         xReturn = ( BaseType_t ) pxEndPoint->bits.bEndPointUp;
     }
     else
     {
-        /* Are all end-points up? */
+        /* 是否所有端点都已启用？ */
         xReturn = FreeRTOS_AllEndPointsUp( NULL );
     }
 
@@ -2611,12 +2500,11 @@ BaseType_t FreeRTOS_IsEndPointUp( const struct xNetworkEndPoint * pxEndPoint )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Return pdTRUE if all end-points belonging to a given interface are up.  When
- *        pxInterface is null, all end-points will be checked.
+ * @brief 如果属于给定接口的所有端点都已启用，则返回 pdTRUE。当 pxInterface 为空时，将检查所有端点。
  *
- * @param[in] pxInterface The network interface of interest, or NULL to check all end-points.
+ * @param[in] pxInterface 感兴趣的网络接口，或 NULL 以检查所有端点。
  *
- * @return pdTRUE if all end-points are up, otherwise pdFALSE;
+ * @return 如果所有端点都已启用则返回 pdTRUE，否则返回 pdFALSE；
  */
 BaseType_t FreeRTOS_AllEndPointsUp( const struct xNetworkInterface * pxInterface )
 {
@@ -2646,9 +2534,9 @@ BaseType_t FreeRTOS_AllEndPointsUp( const struct xNetworkInterface * pxInterface
 #if ( ipconfigCHECK_IP_QUEUE_SPACE != 0 )
 
 /**
- * @brief Get the minimum space in the IP task queue.
+ * @brief 获取 IP 任务队列中的最小空间。
  *
- * @return The minimum possible space in the IP task queue.
+ * @return IP 任务队列中可能的最小空间。
  */
     UBaseType_t uxGetMinimumIPQueueSpace( void )
     {
@@ -2658,16 +2546,16 @@ BaseType_t FreeRTOS_AllEndPointsUp( const struct xNetworkInterface * pxInterface
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the size of the IP-header, by checking the type of the network buffer.
- * @param[in] pxNetworkBuffer The network buffer.
- * @return The size of the corresponding IP-header.
+ * @brief 通过检查网络缓冲区的类型获取 IP 头的大小。
+ * @param[in] pxNetworkBuffer 网络缓冲区。
+ * @return 相应 IP 头的大小。
  */
 size_t uxIPHeaderSizePacket( const NetworkBufferDescriptor_t * pxNetworkBuffer )
 {
     size_t uxResult;
-    /* Map the buffer onto Ethernet Header struct for easy access to fields. */
-    /* MISRA Ref 11.3.1 [Misaligned access] */
-    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+    /* 将缓冲区映射到以太网头结构体，以便轻松访问字段。 */
+    /* MISRA 参考 11.3.1 [未对齐访问] */
+    /* 更多细节请见: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
     /* coverity[misra_c_2012_rule_11_3_violation] */
     const EthernetHeader_t * pxHeader = ( ( const EthernetHeader_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
@@ -2685,9 +2573,9 @@ size_t uxIPHeaderSizePacket( const NetworkBufferDescriptor_t * pxNetworkBuffer )
 /*-----------------------------------------------------------*/
 
 /**
- * @brief Get the size of the IP-header, by checking if the socket bIsIPv6 set.
- * @param[in] pxSocket The socket.
- * @return The size of the corresponding IP-header.
+ * @brief 通过检查套接字 bIsIPv6 是否设置来获取 IP 头的大小。
+ * @param[in] pxSocket 套接字。
+ * @return 相应 IP 头的大小。
  */
 size_t uxIPHeaderSizeSocket( const FreeRTOS_Socket_t * pxSocket )
 {
@@ -2706,7 +2594,8 @@ size_t uxIPHeaderSizeSocket( const FreeRTOS_Socket_t * pxSocket )
 }
 /*-----------------------------------------------------------*/
 
-/* Provide access to private members for verification. */
+/* 提供对私有成员的访问以进行验证。 */
 #ifdef FREERTOS_TCP_ENABLE_VERIFICATION
     #include "aws_freertos_ip_verification_access_ip_define.h"
 #endif
+
