@@ -1,404 +1,392 @@
 /**
  *
  * @copyright &copy; 2010 - 2026, Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.
- * All rights reserved.
+ * 版权所有。
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * 在满足以下条件的前提下，允许以源代码和二进制形式进行重新分发和使用，无论是否经过修改：
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * 1. 源代码的重新分发必须保留上述版权声明、此条件列表以及下述免责声明。
  *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ * 2. 二进制形式的重新分发必须在随分发提供的文档和/或其他材料中复制上述版权声明、
+ *    此条件列表以及下述免责声明。
  *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ * 3. 未经特定事先书面许可，版权持有者的名称及其贡献者的名称不得用于支持或推广
+ *    由本软件派生的产品。
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 本软件由版权持有者和贡献者“按原样”提供，不提供任何明示或暗示的保证，包括但不仅限于
+ * 对适销性和特定用途适用性的暗示保证。在任何情况下，版权持有者或贡献者对任何直接、间接、
+ * 偶然、特殊、惩罚性或后果性损害（包括但不仅限于替代商品或服务的采购、使用、数据或
+ * 利润的损失或业务中断）不承担责任，无论其基于何种责任理论，无论是合同责任、严格责任
+ * 或侵权（包括疏忽或其他），即使已被告知可能发生此类损害，也是如此。
  *
- * We kindly request you to use one or more of the following phrases to refer to
- * foxBMS in your hardware, software, documentation or advertising materials:
+ * 我们恳请您在您的硬件、软件、文档或广告材料中使用以下一个或多个短语来指代 foxBMS：
  *
- * - "This product uses parts of foxBMS&reg;"
- * - "This product includes parts of foxBMS&reg;"
- * - "This product is derived from foxBMS&reg;"
+ * - "本产品使用了 foxBMS&reg; 的部分内容"
+ * - "本产品包含了 foxBMS&reg; 的部分内容"
+ * - "本产品派生自 foxBMS&reg;"
  *
  */
 
 /**
  * @file    ftask_cfg.h
- * @author  foxBMS Team
- * @date    2019-08-26 (date of creation)
- * @updated 2026-04-20 (date of last update)
+ * @author  foxBMS 团队
+ * @date    2019-08-26 (创建日期)
+ * @updated 2026-04-20 (最后更新日期)
  * @version v1.11.0
  * @ingroup TASK_CONFIGURATION
  * @prefix  FTSK
  *
- * @brief   Task configuration header
+ * @brief   任务配置头文件
  * @details TODO
  */
 
 #ifndef FOXBMS__FTASK_CFG_H_
 #define FOXBMS__FTASK_CFG_H_
 
-/*========== Includes =======================================================*/
+/*========== 包含文件 =======================================================*/
 #include "foxbms_config.h"
 
 #include "os.h"
 
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
-/** @brief Stack size of engine task */
+/*========== 宏和定义 =========================================================*/
+/** @brief 引擎任务的栈大小 */
 #define FTSK_TASK_ENGINE_STACK_SIZE_IN_BYTES (1024u)
 
-/** @brief Phase of engine task */
+/** @brief 引擎任务的优先级 */
 #define FTSK_TASK_ENGINE_PRIORITY (OS_PRIORITY_REAL_TIME)
 
-/** @brief Phase of engine task */
+/** @brief 引擎任务的相位 */
 #define FTSK_TASK_ENGINE_PHASE (0u)
 
-/** @brief Cycle time of engine task */
+/** @brief 引擎任务的周期时间 */
 #define FTSK_TASK_ENGINE_CYCLE_TIME (1u)
 
-/** @brief Maximum allowed jitter of engine task */
+/** @brief 引擎任务允许的最大抖动 */
 #define FTSK_TASK_ENGINE_MAXIMUM_JITTER (1u)
 
-/** @brief pvParameters of the engine task */
+/** @brief 引擎任务的 pvParameters 参数 */
 #define FTSK_TASK_ENGINE_PV_PARAMETERS (NULL_PTR)
 
-/** @brief Stack size of cyclic 1 ms task */
+/** @brief 周期 1ms 任务的栈大小 */
 #define FTSK_TASK_CYCLIC_1MS_STACK_SIZE_IN_BYTES (1024u)
 
-/** @brief Priority of cyclic 1ms task */
+/** @brief 周期 1ms 任务的优先级 */
 #define FTSK_TASK_CYCLIC_1MS_PRIORITY (OS_PRIORITY_VERY_HIGH)
 
-/** @brief Phase of cyclic 1ms task */
+/** @brief 周期 1ms 任务的相位 */
 #define FTSK_TASK_CYCLIC_1MS_PHASE (0u)
 
-/** @brief Cycle time of 1ms task */
+/** @brief 1ms 任务的周期时间 */
 #define FTSK_TASK_CYCLIC_1MS_CYCLE_TIME (1u)
 
-/** @brief Maximum allowed jitter of 1ms task */
+/** @brief 1ms 任务允许的最大抖动 */
 #define FTSK_TASK_CYCLIC_1MS_MAXIMUM_JITTER (1u)
 
-/** @brief pvParameters of the 1ms task */
+/** @brief 1ms 任务的 pvParameters 参数 */
 #define FTSK_TASK_CYCLIC_1MS_PV_PARAMETERS (NULL_PTR)
 
-/** @brief Stack size of cyclic 10 ms task */
+/** @brief 周期 10ms 任务的栈大小 */
 #define FTSK_TASK_CYCLIC_10MS_STACK_SIZE_IN_BYTES (5120u)
 
-/** @brief Priority of cyclic 10 ms task */
+/** @brief 周期 10ms 任务的优先级 */
 #define FTSK_TASK_CYCLIC_10MS_PRIORITY (OS_PRIORITY_HIGH)
 
-/** @brief Phase of cyclic 10 ms task */
+/** @brief 周期 10ms 任务的相位 */
 #define FTSK_TASK_CYCLIC_10MS_PHASE (2u)
 
-/** @brief Cycle time of 10 ms task */
+/** @brief 10ms 任务的周期时间 */
 #define FTSK_TASK_CYCLIC_10MS_CYCLE_TIME (10u)
 
-/** @brief Maximum allowed jitter of 10ms task */
+/** @brief 10ms 任务允许的最大抖动 */
 #define FTSK_TASK_CYCLIC_10MS_MAXIMUM_JITTER (2u)
 
-/** @brief pvParameters of the 10ms task */
+/** @brief 10ms 任务的 pvParameters 参数 */
 #define FTSK_TASK_CYCLIC_10MS_PV_PARAMETERS (NULL_PTR)
 
-/** @brief Stack size of cyclic 100 ms task */
+/** @brief 周期 100ms 任务的栈大小 */
 #define FTSK_TASK_CYCLIC_100MS_STACK_SIZE_IN_BYTES (1024u)
 
-/** @brief Priority of cyclic 100 ms task */
+/** @brief 周期 100ms 任务的优先级 */
 #define FTSK_TASK_CYCLIC_100MS_PRIORITY (OS_PRIORITY_ABOVE_NORMAL)
 
-/** @brief Phase of cyclic 100 ms task */
+/** @brief 周期 100ms 任务的相位 */
 #define FTSK_TASK_CYCLIC_100MS_PHASE (56u)
 
-/** @brief Cycle time of 100ms task */
+/** @brief 100ms 任务的周期时间 */
 #define FTSK_TASK_CYCLIC_100MS_CYCLE_TIME (100u)
 
-/** @brief Maximum allowed jitter of 100ms task */
+/** @brief 100ms 任务允许的最大抖动 */
 #define FTSK_TASK_CYCLIC_100MS_MAXIMUM_JITTER (5u)
 
-/** @brief pvParameters of the 100ms task */
+/** @brief 100ms 任务的 pvParameters 参数 */
 #define FTSK_TASK_CYCLIC_100MS_PV_PARAMETERS (NULL_PTR)
 
-/** @brief Stack size of cyclic 100 ms task for algorithms */
+/** @brief 用于算法的周期 100ms 任务的栈大小 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_STACK_SIZE_IN_BYTES (1024u)
 
-/** @brief Priority of cyclic 100 ms task for algorithms */
+/** @brief 用于算法的周期 100ms 任务的优先级 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_PRIORITY (OS_PRIORITY_NORMAL)
 
-/** @brief Phase of cyclic 100 ms task for algorithms */
+/** @brief 用于算法的周期 100ms 任务的相位 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_PHASE (64u)
 
-/** @brief Cycle time of 100ms task for algorithms*/
+/** @brief 用于算法的 100ms 任务的周期时间 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_CYCLE_TIME (100u)
 
-/** @brief Maximum allowed jitter of 100ms task for algorithms */
+/** @brief 用于算法的 100ms 任务允许的最大抖动 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_MAXIMUM_JITTER (5u)
 
-/** @brief pvParameters of the 100ms task for algorithms  */
+/** @brief 用于算法的 100ms 任务的 pvParameters 参数 */
 #define FTSK_TASK_CYCLIC_ALGORITHM_100MS_PV_PARAMETERS (NULL_PTR)
 
-/** @brief Stack size of continuously running task for I2C */
+/** @brief 连续运行的 I2C 任务的栈大小 */
 #define FTSK_TASK_I2C_STACK_SIZE_IN_BYTES (2048u)
 
-/** @brief Priority of continuously running task for I2C */
+/** @brief 连续运行的 I2C 任务的优先级 */
 #define FTSK_TASK_I2C_PRIORITY (FTSK_TASK_CYCLIC_10MS_PRIORITY)
 
-/** @brief Phase of continuously running task for I2C */
+/** @brief 连续运行的 I2C 任务的相位 */
 #define FTSK_TASK_I2C_PHASE (0u)
 
-/** @brief Cycle time of continuously running task for I2C */
+/** @brief 连续运行的 I2C 任务的周期时间 */
 #define FTSK_TASK_I2C_CYCLE_TIME (0u)
 
-/** @brief pvParameters of the continuously running task for I2C  */
+/** @brief 连续运行的 I2C 任务的 pvParameters 参数 */
 #define FTSK_TASK_I2C_PV_PARAMETERS (NULL_PTR)
 
 #if (FOXBMS_AFE_DRIVER_TYPE_NO_FSM == 1)
-/** @brief Stack size of continuously running task for AFEs */
+/** @brief 连续运行的 AFE 任务的栈大小 */
 #define FTSK_TASK_AFE_STACK_SIZE_IN_BYTES (4096u)
 
-/** @brief Priority of continuously running task for AFEs */
+/** @brief 连续运行的 AFE 任务的优先级 */
 #define FTSK_TASK_AFE_PRIORITY (OS_PRIORITY_ABOVE_HIGH)
 
-/** @brief Phase of continuously running task for AFEs */
+/** @brief 连续运行的 AFE 任务的相位 */
 #define FTSK_TASK_AFE_PHASE (0u)
 
-/** @brief Cycle time of continuously running task for AFEs */
+/** @brief 连续运行的 AFE 任务的周期时间 */
 #define FTSK_TASK_AFE_CYCLE_TIME (0u)
 
-/** @brief pvParameters of the continuously running task for AFEs  */
+/** @brief 连续运行的 AFE 任务的 pvParameters 参数 */
 #define FTSK_TASK_AFE_PV_PARAMETERS (NULL_PTR)
 #endif
 
 #if defined(FOXBMS_UART_SUPPORT) && FOXBMS_UART_SUPPORT == 1
-/** @brief Stack size of continuously running task for UART */
+/** @brief 连续运行的 UART 任务的栈大小 */
 #define FTSK_TASK_UART_STACK_SIZE_IN_BYTES (1024u)
 
-/** @brief Priority of continuously running task for UART */
+/** @brief 连续运行的 UART 任务的优先级 */
 #define FTSK_TASK_UART_PRIORITY (OS_PRIORITY_NORMAL)
 
-/** @brief Phase of continuously running task for UART */
+/** @brief 连续运行的 UART 任务的相位 */
 #define FTSK_TASK_UART_PHASE (0u)
 
-/** @brief Cycle time of continuously running task for UART */
+/** @brief 连续运行的 UART 任务的周期时间 */
 #define FTSK_TASK_UART_CYCLE_TIME (0u)
 
-/** @brief pvParameters of the continuously running task for UART  */
+/** @brief 连续运行的 UART 任务的 pvParameters 参数 */
 #define FTSK_TASK_UART_PV_PARAMETERS (NULL_PTR)
 #endif
 
 #if (defined(FOXBMS_TCP_SUPPORT) && (FOXBMS_TCP_SUPPORT == 1))
-/** @brief Stack size of the task for EMAC */
+/** @brief EMAC 任务的栈大小 */
 #define FTSK_TASK_EMAC_STACK_SIZE_IN_BYTES (2048u)
 
-/** @brief Priority of the task for EMAC */
+/** @brief EMAC 任务的优先级 */
 #define FTSK_TASK_EMAC_PRIORITY (OS_PRIORITY_ABOVE_NORMAL)
 
-/** @brief Phase of the task for EMAC */
+/** @brief EMAC 任务的相位 */
 #define FTSK_TASK_EMAC_PHASE (10u)
 
-/** @brief Cycle time of the task for EMAC */
+/** @brief EMAC 任务的周期时间 */
 #define FTSK_TASK_EMAC_CYCLE_TIME (0u)
 
-/** @brief pvParameters of the task for EMAC  */
+/** @brief EMAC 任务的 pvParameters 参数 */
 #define FTSK_TASK_EMAC_PV_PARAMETERS (NULL_PTR)
 #endif
 
-/*========== Extern Constant and Variable Declarations ======================*/
+/*========== 外部常量和变量声明 ======================*/
 /**
- * @brief   Task configuration of the engine task
- * @details Task for database and system monitoring
+ * @brief   引擎任务的任务配置
+ * @details 用于数据库和系统监控的任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionEngine;
 
 /**
- * @brief   Task configuration of the cyclic 1 ms task
- * @details Cyclic 1 ms task
+ * @brief   周期 1ms 任务的任务配置
+ * @details 周期 1ms 任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionCyclic1ms;
 
 /**
- * @brief   Task configuration of the cyclic 10 ms task
- * @details Cyclic 10 ms task
+ * @brief   周期 10ms 任务的任务配置
+ * @details 周期 10ms 任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionCyclic10ms;
 
 /**
- * @brief   Task configuration of the cyclic 100 ms task
- * @details Cyclic 100 ms task
+ * @brief   周期 100ms 任务的任务配置
+ * @details 周期 100ms 任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionCyclic100ms;
 
 /**
- * @brief   Task configuration of the cyclic 100 ms task for algorithms
- * @details Cyclic 100 ms task for algorithms
+ * @brief   用于算法的周期 100ms 任务的任务配置
+ * @details 用于算法的周期 100ms 任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionCyclicAlgorithm100ms;
 
 /**
- * @brief   Task configuration of the continuously running task for MCU I2C communication
- * @details Continuously running task for MCU I2C communication
+ * @brief   用于 MCU I2C 通信的连续运行任务的任务配置
+ * @details 用于 MCU I2C 通信的连续运行任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionI2c;
 
 #if (FOXBMS_AFE_DRIVER_TYPE_NO_FSM == 1)
 /**
- * @brief   Task configuration of the continuously running task for AFEs
- * @details Continuously running task for AFEs
+ * @brief   用于 AFE 的连续运行任务的任务配置
+ * @details 用于 AFE 的连续运行任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionAfe;
 #endif
 
 #if defined(FOXBMS_UART_SUPPORT) && FOXBMS_UART_SUPPORT == 1
 /**
- * @brief   Task configuration of the task for UART flow control
- * @details task for UART flow control handling
+ * @brief   用于 UART 流控制的任务的任务配置
+ * @details 用于 UART 流控制处理的任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionUart;
 #endif
 
 #if (defined(FOXBMS_TCP_SUPPORT) && (FOXBMS_TCP_SUPPORT == 1))
 /**
- * @brief   Task configuration of the  task for MCU EMAC communication
- * @details  task for MCU EMAC communication
+ * @brief   用于 MCU EMAC 通信的任务的任务配置
+ * @details 用于 MCU EMAC 通信的任务
  */
 extern OS_TASK_DEFINITION_s ftsk_taskDefinitionEmac;
 #endif
 
 /**
- * @brief Definition of task handles
+ * @brief 任务句柄定义
  */
 extern OS_TASK_HANDLE ftsk_taskHandleI2c;
 
 #if (FOXBMS_AFE_DRIVER_TYPE_NO_FSM == 1)
 /**
- * @brief Definition of task handles
+ * @brief 任务句柄定义
  */
 extern OS_TASK_HANDLE ftsk_taskHandleAfe;
 #endif
 
 #if defined(FOXBMS_UART_SUPPORT) && FOXBMS_UART_SUPPORT == 1
 /**
- * @brief Definition of task handles
+ * @brief 任务句柄定义
  */
 extern OS_TASK_HANDLE ftsk_taskHandleUart;
 #endif
 
 #if (defined(FOXBMS_TCP_SUPPORT) && (FOXBMS_TCP_SUPPORT == 1))
 /**
- * @brief Definition of task handles
+ * @brief 任务句柄定义
  */
 
 extern OS_TASK_HANDLE ftsk_taskHandleEmac;
 #endif
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 =====================================*/
 /**
- * @brief   Initializes the database
- * @details Start up after scheduler starts
- * @warning Do not change the content of this function. This will very likely
- *          break the system. This function is kept in the configuration file
- *          to have a uniform task configuration.
+ * @brief   初始化数据库
+ * @details 调度器启动后的启动操作
+ * @warning 不要更改此函数的内容。这极有可能破坏系统。此函数保留在配置文件中
+ *          是为了拥有统一的任务配置。
  */
 extern void FTSK_InitializeUserCodeEngine(void);
 
 /**
- * @brief   Engine task for the database and the system monitoring module
- * @details Start up after scheduler start. First task to be run, all other
- *          tasks only starts when this task has started
- * @warning Do not change the content of this function. This will very likely
- *          break the system. This function is kept in the configuration file
- *          to have a uniform task configuration.
+ * @brief   用于数据库和系统监控模块的引擎任务
+ * @details 调度器启动后的启动操作。第一个运行的任务，所有其他任务仅在此任务
+ *          启动后才会启动
+ * @warning 不要更改此函数的内容。这极有可能破坏系统。此函数保留在配置文件中
+ *          是为了拥有统一的任务配置。
  */
 extern void FTSK_RunUserCodeEngine(void);
 
 /**
- * @brief   Initialization function before all tasks started
- * @details This function is called after the scheduler started but before any
- *          cyclic task runs. Here modules get initialized that are not used
- *          during the startup process.
+ * @brief   所有任务启动前的初始化函数
+ * @details 此函数在调度器启动后但在任何周期任务运行前调用。在此处初始化在
+ *          启动过程中未使用的模块。
  */
 extern void FTSK_InitializeUserCodePreCyclicTasks(void);
 
 /**
- * @brief   Cyclic 1 ms task
+ * @brief   周期 1ms 任务
  * @details TODO
  */
 extern void FTSK_RunUserCodeCyclic1ms(void);
 
 /**
- * @brief   Cyclic 10 ms task
+ * @brief   周期 10ms 任务
  * @details TODO
  */
 extern void FTSK_RunUserCodeCyclic10ms(void);
 
 /**
- * @brief   Cyclic 100 ms task
+ * @brief   周期 100ms 任务
  * @details TODO
  */
 extern void FTSK_RunUserCodeCyclic100ms(void);
 
 /**
- * @brief   Cyclic 100 ms task for algorithms
+ * @brief   用于算法的周期 100ms 任务
  * @details TODO
  */
 extern void FTSK_RunUserCodeCyclicAlgorithm100ms(void);
 
 /**
- * @brief   Continuously running task for I2C
- * @details Implements the MCU communication over I2C
+ * @brief   连续运行的 I2C 任务
+ * @details 实现 MCU 通过 I2C 的通信
  */
 extern void FTSK_RunUserCodeI2c(void);
 
 #if (FOXBMS_AFE_DRIVER_TYPE_NO_FSM == 1)
 /**
- * @brief   Continuously running task for AFEs
- * @details Implements the communications with AFEs without state machine.
+ * @brief   用于 AFE 的连续运行任务
+ * @details 实现与无状态机的 AFE 的通信。
  */
 extern void FTSK_RunUserCodeAfe(void);
 #endif
 
 #if defined(FOXBMS_UART_SUPPORT) && FOXBMS_UART_SUPPORT == 1
 /**
- * @brief   Continuously running task for Uart
- * @details Implements the software flow control for UART
+ * @brief   用于 UART 的连续运行任务
+ * @details 实现 UART 的软件流控制
  */
 extern void FTSK_RunUserCodeUart(void);
 #endif
 
 #if (defined(FOXBMS_TCP_SUPPORT) && (FOXBMS_TCP_SUPPORT == 1))
 /**
- * @brief   Continuously running task for EMAC
- * @details Implements the MCU communication over TCP with EMAC
+ * @brief   用于 EMAC 的连续运行任务
+ * @details 实现 MCU 通过 EMAC 的 TCP 通信
  */
 extern void FTSK_RunUserCodeEmac(void);
 #endif
 
 /**
- * @brief   Idle task
- * @details Called by #vApplicationIdleHook() if configUSE_IDLE_HOOK in
- *          FreeRTOSConfig.h is enabled. If you do not need this hook, you can
- *          disable it in the FreeRTOS configuration.
+ * @brief   空闲任务
+ * @details 如果 FreeRTOSConfig.h 中的 configUSE_IDLE_HOOK 被启用，则由
+ *          #vApplicationIdleHook() 调用。如果不需要此钩子，可以在 FreeRTOS
+ *          配置中禁用它。
  */
 extern void FTSK_RunUserCodeIdle(void);
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
+/*========== 外部化的静态函数原型 (单元测试) ===========*/
 #ifdef UNITY_UNIT_TEST
 #endif
 
 #endif /* FOXBMS__FTASK_CFG_H_ */
+
