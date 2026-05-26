@@ -1634,59 +1634,111 @@ void BMS_Trigger(void) {
     bms_state.counter++;
 }
 
+/**
+ * @brief    获取电池系统当前的电流流动状态（充电、放电或静置）
+ * @retval   BMS_CURRENT_FLOW_STATE_e 枚举类型，表示当前的电流流动状态
+ */
 extern BMS_CURRENT_FLOW_STATE_e BMS_GetBatterySystemState(void) {
+    /* 直接从全局状态结构体 bms_state 中读取当前的电流流动状态 */
     return bms_state.currentFlowState;
 }
 
+/**
+ * @brief    根据当前电流值判断电流流动方向（充电、放电或静置）
+ * @param    current_mA: 当前电流值，单位为毫安。正负值代表不同方向。
+ * @retval   BMS_CURRENT_FLOW_STATE_e 枚举类型，表示计算得出的电流流动状态
+ * @note     AXIVION 常规 Generic-MissingParameterAssert: 
+ *           current_mA 参数接受整个 int32_t 范围，因此无需进行参数断言校验
+ */
 extern BMS_CURRENT_FLOW_STATE_e BMS_GetCurrentFlowDirection(int32_t current_mA) {
-    /* AXIVION 常规 Generic-MissingParameterAssert: current_mA: 参数接受整个范围 */
+    /* 默认将返回值初始化为放电状态 */
     BMS_CURRENT_FLOW_STATE_e retVal = BMS_DISCHARGING;
 
+    /* 
+     * 根据系统配置宏 BS_POSITIVE_DISCHARGE_CURRENT 判断正电流代表放电还是充电。
+     * 这是为了兼容不同的硬件采样设计（有的硬件放电电流为正，有的为负）。
+     */
     if (BS_POSITIVE_DISCHARGE_CURRENT == true) {
+        /* 情况A：放电电流为正方向 */
         if (current_mA >= BS_REST_CURRENT_mA) {
+            /* 电流大于等于静置阈值，判定为放电 */
             retVal = BMS_DISCHARGING;
         } else if (current_mA <= -BS_REST_CURRENT_mA) {
+            /* 电流小于等于负静置阈值，判定为充电 */
             retVal = BMS_CHARGING;
         } else {
+            /* 电流处于 (-BS_REST_CURRENT_mA, BS_REST_CURRENT_mA) 之间，判定为静置 */
             retVal = BMS_AT_REST;
         }
     } else {
+        /* 情况B：放电电流为负方向（充电电流为正方向） */
         if (current_mA <= -BS_REST_CURRENT_mA) {
+            /* 电流小于等于负静置阈值，判定为放电 */
             retVal = BMS_DISCHARGING;
         } else if (current_mA >= BS_REST_CURRENT_mA) {
+            /* 电流大于等于静置阈值，判定为充电 */
             retVal = BMS_CHARGING;
         } else {
+            /* 电流处于 (-BS_REST_CURRENT_mA, BS_REST_CURRENT_mA) 之间，判定为静置 */
             retVal = BMS_AT_REST;
         }
     }
     return retVal;
 }
 
+/**
+ * @brief    检查指定的电池串是否已闭合（即主接触器已吸合，串已投入运行）
+ * @param    stringNumber: 电池串的编号
+ * @retval   true: 该串已闭合; false: 该串未闭合
+ */
 extern bool BMS_IsStringClosed(uint8_t stringNumber) {
+    /* 
+     * FAS_ASSERT 是安全断言，确保传入的串编号没有超过系统配置的最大串数，
+     * 防止数组越界访问。如果越界，程序会在此处报错或停机。
+     */
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
+    
     bool retval = false;
+    /* 检查该串对应的主接触器状态数组标志位 */
     if (bms_state.closedStrings[stringNumber] == true) {
         retval = true;
     }
     return retval;
 }
 
+/**
+ * @brief    检查指定的电池串是否正在进行预充
+ * @param    stringNumber: 电池串的编号
+ * @retval   true: 该串正在预充; false: 该串未在预充
+ */
 extern bool BMS_IsStringPrecharging(uint8_t stringNumber) {
+    /* 安全断言：防止串编号越界 */
     FAS_ASSERT(stringNumber < BS_NR_OF_STRINGS);
+    
     bool retval = false;
+    /* 检查该串对应的预充接触器状态数组标志位 */
     if (bms_state.closedPrechargeContactors[stringNumber] == true) {
         retval = true;
     }
     return retval;
 }
 
+/**
+ * @brief    获取当前已闭合（已连接/投入运行）的电池串总数
+ * @retval   已闭合的电池串数量
+ */
 extern uint8_t BMS_GetNumberOfConnectedStrings(void) {
     return bms_state.numberOfClosedStrings;
 }
 
+/**
+ * @brief    检查系统是否正在向错误状态转换
+ * @retval   true: 正在进入错误状态; false: 否
+ */
 extern bool BMS_IsTransitionToErrorStateActive(void) {
     return bms_state.transitionToErrorState;
 }
+
 
 /*========== 外部化的静态函数实现 (单元测试) =======*/
 #ifdef UNITY_UNIT_TEST
