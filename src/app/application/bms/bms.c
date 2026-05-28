@@ -77,43 +77,56 @@
 
 /*========== 静态常量和变量定义 =======================*/
 
-/**
- * 包含 BMS 状态机的状态
- */
+// BMS_STATE_s 是BMS状态机的核心结构体类型。
+// static 表示该变量仅限当前 .c 文件使用，这是状态机封装的标准做法，防止外部文件直接篡改状态。
 static BMS_STATE_s bms_state = {
-    .currentSystick                    = 0u,
-    .timer                             = 0u,
-    .stateRequest                      = BMS_STATE_NO_REQUEST,
-    .state                             = BMS_FSM_STATE_UNINITIALIZED,
-    .substate                          = BMS_FSM_SUBSTATE_ENTRY,
-    .lastState                         = BMS_FSM_STATE_UNINITIALIZED,
-    .lastSubstate                      = BMS_FSM_SUBSTATE_ENTRY,
-    .triggerentry                      = 0u,
-    .ErrRequestCounter                 = 0u,
-    .initFinished                      = STD_NOT_OK,
-    .counter                           = 0u,
-    .OscillationTimeout                = 0u,
-    .prechargeTryCounter               = 0u,
-    .powerPath                         = BMS_POWER_PATH_OPEN,
-    .closedStrings                     = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))},
-    .closedPrechargeContactors         = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))},
-    .numberOfClosedStrings             = 0u,
-    .deactivatedStrings                = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))},
-    .firstClosedString                 = 0u,
-    .stringOpenTimeout                 = 0u,
-    .nextStringClosedTimer             = 0u,
-    .stringCloseTimeout                = 0u,
-    .nextState                         = BMS_FSM_STATE_STANDBY,
-    .restTimer_10ms                    = BS_RELAXATION_PERIOD_10ms,
-    .currentFlowState                  = BMS_RELAXATION,
-    .remainingDelay_ms                 = BMS_NO_ACTIVE_DELAY_TIME_ms,
-    .minimumActiveDelay_ms             = BMS_NO_ACTIVE_DELAY_TIME_ms,
-    .startOfPrecharging                = 0u,
-    .transitionToErrorState            = false,
-    .timeAboveContactorBreakCurrent_ms = 0u,
-    .stringToBeOpened                  = 0u,
-    .contactorToBeOpened               = CONT_UNDEFINED,
+    // --- 时间与节拍 ---
+    .currentSystick                    = 0u,  // 当前系统滴答计时器，记录系统运行的总时间基础
+    .timer                             = 0u,  // 状态机通用定时器（就是你要赋值 BMS_FSM_MEDIUM_TIME 的那个变量），用于状态内计时/超时判断
+    .nextStringClosedTimer             = 0u,  // 下一个电池簇闭合的等待计时器
+    .stringOpenTimeout                 = 0u,  // 电池簇断开超时计时器
+    .stringCloseTimeout                = 0u,  // 电池簇闭合超时计时器
+    .restTimer_10ms                    = BS_RELAXATION_PERIOD_10ms, // 静置延时计时器（10ms为单位），用于电芯电压弛豫/恢复期，防止误判
+    .timeAboveContactorBreakCurrent_ms = 0u,  // 电流超过接触器分断电流的持续时间（保护接触器，防止带载拉弧断开）
+
+    // --- 状态机核心状态 ---
+    .stateRequest                      = BMS_STATE_NO_REQUEST,     // 外部请求的状态转换标志（如请求进入Standby），初始化为无请求
+    .state                             = BMS_FSM_STATE_UNINITIALIZED, // 当前主状态：未初始化
+    .substate                          = BMS_FSM_SUBSTATE_ENTRY,   // 当前子状态：入口状态（状态机进入某个主状态时的第一个动作）
+    .lastState                         = BMS_FSM_STATE_UNINITIALIZED, // 上一次的主状态，用于追溯和防抖
+    .lastSubstate                      = BMS_FSM_SUBSTATE_ENTRY,   // 上一次的子状态
+    .nextState                         = BMS_FSM_STATE_STANDBY,    // 准备跳转的下一个状态，初始化指向待机状态
+
+    // --- 标志位与计数器 ---
+    .triggerentry                      = 0u,   // 状态触发入口标志
+    .ErrRequestCounter                 = 0u,   // 错误请求计数器，可能用于错误防抖（连续检测到N次错误才真正报错）
+    .counter                           = 0u,   // 通用计数器
+    .OscillationTimeout                = 0u,   // 状态振荡超时（如果状态频繁在两个状态间来回跳转，触发保护）
+    .prechargeTryCounter               = 0u,   // 预充尝试计数器（预充失败后允许重试几次，超过次数则彻底报错）
+    .initFinished                      = STD_NOT_OK, // 初始化完成标志，初始化为未完成(STD_NOT_OK)
+    .startOfPrecharging                = 0u,   // 记录预充开始时的时间戳，用于计算预充耗时
+
+    // --- 电池簇与接触器控制 ---
+    .powerPath                         = BMS_POWER_PATH_OPEN, // 当前功率路径状态：断开（未充放电）
+    .numberOfClosedStrings             = 0u,   // 当前已闭合的电池簇数量
+    .firstClosedString                 = 0u,   // 第一个闭合的电池簇编号
+    .stringToBeOpened                  = 0u,   // 需要被断开的电池簇编号
+    .contactorToBeOpened               = CONT_UNDEFINED, // 需要被断开的接触器类型（主正/主负/预充），初始化为未定义
+
+    // --- 数组（使用宏生成初始化值）---
+    // GEN_REPEAT_U 是一个高级宏，用于生成重复的数值。
+    // 例如 BS_NR_OF_STRINGS 为3，则 {GEN_REPEAT_U(false, 3)} 展开后就是 {false, false, false}
+    .closedStrings                     = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))}, // 记录每个簇的主接触器是否闭合
+    .closedPrechargeContactors         = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))}, // 记录每个簇的预充接触器是否闭合
+    .deactivatedStrings                = {GEN_REPEAT_U(false, GEN_STRIP(BS_NR_OF_STRINGS))}, // 记录被禁用/隔离的电池簇（如电压过低或温度过高被切除）
+
+    // --- 延时与电流状态 ---
+    .currentFlowState                  = BMS_RELAXATION, // 当前电流流向状态：弛豫（静置，无电流）
+    .remainingDelay_ms                 = BMS_NO_ACTIVE_DELAY_TIME_ms, // 剩余延时时间
+    .minimumActiveDelay_ms             = BMS_NO_ACTIVE_DELAY_TIME_ms, // 最小激活延时时间
+    .transitionToErrorState            = false, // 是否需要跳转到错误状态的标志
 };
+
 
 /** 数据库表的本地副本 */
 /**@{*/
