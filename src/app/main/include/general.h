@@ -1,114 +1,106 @@
 /**
  *
  * @copyright &copy; 2010 - 2026, Fraunhofer-Gesellschaft zur Foerderung der angewandten Forschung e.V.
- * All rights reserved.
+ * 保留所有权利。
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * 在满足以下条件的前提下，允许以源代码和二进制形式进行重新分发和使用，
+ * 无论是否经过修改：
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * 1. 源代码的重新分发必须保留上述版权声明、此条件列表以及以下免责声明。
  *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ * 2. 二进制形式的重新分发必须在随分发提供的文档和/或其他材料中
+ * 复制上述版权声明、此条件列表以及以下免责声明。
  *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ * 3. 未经特定的事先书面许可，版权持有者的名称及其贡献者的名称
+ * 均不得用于认可或推广基于本软件派生的产品。
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 本软件由版权持有者及贡献者“按原样”提供，不提供任何明示或暗示的保证，
+ * 包括但不限于对适销性和特定用途适用性的暗示保证。在任何情况下，
+ * 版权持有者或贡献者均不对任何直接、间接、偶然、特殊、惩罚性或后果性
+ * 损害（包括但不限于替代商品或服务的采购、使用、数据或利润的损失，
+ * 或业务中断）负责，无论该损害是如何引起的，也无论基于何种责任理论，
+ * 无论是合同责任、严格责任还是侵权（包括疏忽或其他），即使已被告知
+ * 可能发生此类损害。
  *
- * We kindly request you to use one or more of the following phrases to refer to
- * foxBMS in your hardware, software, documentation or advertising materials:
+ * 我们恳请您在您的硬件、软件、文档或广告材料中使用以下一个或多个短语
+ * 来指代 foxBMS：
  *
- * - "This product uses parts of foxBMS&reg;"
- * - "This product includes parts of foxBMS&reg;"
- * - "This product is derived from foxBMS&reg;"
+ * - "本产品使用了 foxBMS&reg; 的部分内容"
+ * - "本产品包含了 foxBMS&reg; 的部分内容"
+ * - "本产品派生自 foxBMS&reg;"
  *
  */
 
 /**
  * @file    general.h
- * @author  foxBMS Team
- * @date    2019-09-24 (date of creation)
- * @updated 2026-04-20 (date of last update)
+ * @author  foxBMS 团队
+ * @date    2019-09-24 (创建日期)
+ * @updated 2026-04-20 (最后更新日期)
  * @version v1.11.0
  * @ingroup MAIN_CONFIGURATION
  * @prefix  GEN
  *
- * @brief   General macros and definitions for the whole platform.
- * @details TODO
+ * @brief   针对整个平台的通用宏和定义。
+ * @details 待办事项
  */
 
 #ifndef FOXBMS__GENERAL_H_
 #define FOXBMS__GENERAL_H_
 
-/*========== Includes =======================================================*/
+/*========== 头文件包含 =====================================================*/
 #include "fassert.h"
 #include "fstd_types.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-/*========== Macros and Definitions =========================================*/
+/*========== 宏和定义 =======================================================*/
 
 /**
- * @brief   sets a bit to 1u
- * @param[in,out]   register    register on which to set the bit
- * @param[in]       bit         number of the bit that should be set to 1u
+ * @brief   将某一位置为 1u
+ * @param[in,out]   register    需要设置位的寄存器
+ * @param[in]       bit         需要设置为 1u 的位号
  */
 #define GEN_SET_BIT(register, bit) ((register) |= (uint32)((uint32)1u << (bit)))
 /**
- * @brief   clears a bit to 0u
- * @param[in,out]   register    register on which to clear the bit
- * @param[in]       bit         number of the bit that should be cleared to 0u
+ * @brief   将某一位清零为 0u
+ * @param[in,out]   register    需要清除位的寄存器
+ * @param[in]       bit         需要清零为 0u 的位号
  */
 #define GEN_CLEAR_BIT(register, bit) ((register) &= ~(uint32)((uint32)1u << (bit)))
 
 /**
- * @brief Allows functions to generate warnings in GCC for unused returns.
+ * @brief 允许函数在 GCC 中针对未使用的返回值生成警告。
  *
- * This attribute allows to mark that a function return value must be used.
- * The compiler will generate a warning when the return value of a function
- * with this marker is not used in subsequent code.
+ * 此属性允许标记函数的返回值必须被使用。
+ * 当后续代码中未使用带有此标记的函数的返回值时，编译器将生成警告。
  */
 #define GEN_MUST_CHECK_RETURN __attribute__((warn_unused_result))
 
-/* AXIVION Next Codeline Style MisraC2012-1.2: function-inlining is sometimes necessary for performance reasons */
-/** This attribute tells the compiler that the function should always be inlined */
+/* AXIVION 下一行代码风格 MisraC2012-1.2: 出于性能原因，有时必须进行函数内联 */
+/** 此属性告诉编译器应始终内联该函数 */
 #define GEN_ALWAYS_INLINE __attribute__((always_inline))
 
-/* assert that the basic datatypes in fstd_types.h are intact */
-/* AXIVION Disable Style MisraC2012-10.4: These assertions have to check the actual values of the enums and defines. */
-FAS_STATIC_ASSERT(false == 0, "false seems to have been modified.");
-FAS_STATIC_ASSERT(true != false, "true seems to have been modified.");
-FAS_STATIC_ASSERT(true == 1, "true seems to have been modified.");
+/* 断言 fstd_types.h 中的基本数据类型完好无损 */
+/* AXIVION 禁用风格 MisraC2012-10.4: 这些断言必须检查枚举和宏定义的实际值。 */
+FAS_STATIC_ASSERT(false == 0, "false 似乎已被修改。");
+FAS_STATIC_ASSERT(true != false, "true 似乎已被修改。");
+FAS_STATIC_ASSERT(true == 1, "true 似乎已被修改。");
 
-FAS_STATIC_ASSERT(STD_OK == 0, "STD_OK seems to have been modified.");
-FAS_STATIC_ASSERT(STD_OK != STD_NOT_OK, "STD_OK or STD_NOT_OK seem to have been modified.");
-FAS_STATIC_ASSERT(STD_NOT_OK == 1, "STD_NOT_OK seems to have been modified.");
-/* AXIVION Enable Style MisraC2012-10.4: */
+FAS_STATIC_ASSERT(STD_OK == 0, "STD_OK 似乎已被修改。");
+FAS_STATIC_ASSERT(STD_OK != STD_NOT_OK, "STD_OK 或 STD_NOT_OK 似乎已被修改。");
+FAS_STATIC_ASSERT(STD_NOT_OK == 1, "STD_NOT_OK 似乎已被修改。");
+/* AXIVION 启用风格 MisraC2012-10.4: */
 
 /**
- * Internal macros for the implementation of #GEN_REPEAT_U(). Do not use outside.
+ * 用于实现 #GEN_REPEAT_U() 的内部宏。请勿在外部使用。
  * @{
  */
-/* AXIVION Disable Style Generic-NoUnsafeMacro MisraC2012Directive-4.9: Due to the nature of these macros
-   it is impossible to wrap the REPEAT_Uxu(x) token in parentheses. With these
-   function-like Macros repeating a token is implemented. */
-/* us lowercase 'u' suffix to emphasize the unsignedness of the 'GEN_REPEAT_U*u' macros. */
+/* AXIVION 禁用风格 Generic-NoUnsafeMacro MisraC2012Directive-4.9: 由于这些宏的特性，
+   不可能将 REPEAT_Uxu(x) 标记用括号括起来。通过这些类似函数的宏实现了重复标记的功能。 */
+/* 使用小写的 'u' 后缀来强调 'GEN_REPEAT_U*u' 宏的无符号特性。 */
 #define GEN_REPEAT_U1u(x)  (x)
 #define GEN_REPEAT_U2u(x)  GEN_REPEAT_U1u(x), (x)
 #define GEN_REPEAT_U3u(x)  GEN_REPEAT_U2u(x), (x)
@@ -209,70 +201,68 @@ FAS_STATIC_ASSERT(STD_NOT_OK == 1, "STD_NOT_OK seems to have been modified.");
 #define GEN_REPEAT_U98u(x) GEN_REPEAT_U97u(x), (x)
 #define GEN_REPEAT_U99u(x) GEN_REPEAT_U98u(x), (x)
 
-/* AXIVION Disable Style MisraC2012-20.10: Usage allowed as long as remarks in documentation are honored. */
+/* AXIVION 禁用风格 MisraC2012-20.10: 只要遵守文档中的说明，即允许使用。 */
 #define GEN_REPEAT_Ux(x, n) GEN_REPEAT_U##n(x)
-/* AXIVION Enable Style Generic-NoUnsafeMacro MisraC2012Directive-4.9 MisraC2012-20.10: */
+/* AXIVION 启用风格 Generic-NoUnsafeMacro MisraC2012Directive-4.9 MisraC2012-20.10: */
 /**@}*/
 
-/** Maximum number of supported repetitions in #GEN_REPEAT_U(). Adapt if you change implementation.*/
+/** #GEN_REPEAT_U() 中支持的最大重复次数。如果更改实现，请相应调整。*/
 #define GEN_REPEAT_MAXIMUM_REPETITIONS (99u)
 
 /**
- * @brief   Macro that helps to generate a series of literals (for array initializers).
- * @details This macro generates a series of literals for array initializers.
- *          This can be used for initializing arrays to arbitrary non-null values
- *          when their size is defined with a macro. If the array shall be initialized
- *          to null the standard {0} should be used.
+ * @brief   帮助生成一系列字面量的宏（用于数组初始化器）。
+ * @details 此宏为数组初始化器生成一系列字面量。
+ *          当数组的大小由宏定义且需要将其初始化为非零值时，
+ *          可以使用此宏。如果要将数组初始化为零，应使用标准的 {0}。
  *
- * @param   x   token that should be repeated, e.g. true
- * @param   n   Times that it should be repeated (stripped of parenthesis with
- *              #GEN_STRIP() and described as unsigned integer literal) (maximum 16,
- *              #GEN_REPEAT_MAXIMUM_REPETITIONS, repetitions)
+ * @param   x   需要重复的标记，例如 true
+ * @param   n   重复的次数（通过 #GEN_STRIP() 去除括号，并描述为无符号整数字面量）
+ *              （最多 16 次，即 #GEN_REPEAT_MAXIMUM_REPETITIONS 次重复）
  *
- *          Example usage:
+ *          用法示例：
   \verbatim
   #define ARRAY_SIZE (4u)
   bool variable[ARRAY_SIZE] = {GEN_REPEAT_U(false, GEN_STRIP(ARRAY_SIZE))};
   \endverbatim
- *          This will expand to:
+ *          这将展开为：
   \verbatim
   bool variable[ARRAY_SIZE] = {false, false, false, false};
   \endverbatim
  */
-/* AXIVION Next Codeline Style MisraC2012Directive-4.9: Function-like macro needed for this feature. */
+/* AXIVION 下一行代码风格 MisraC2012Directive-4.9: 此功能需要类似函数的宏。 */
 #define GEN_REPEAT_U(x, n) GEN_REPEAT_Ux(x, n)
 
-/** Internal helper macros for #GEN_STRIP(). Do not use outside.
+/** #GEN_STRIP() 的内部辅助宏。请勿在外部使用。
  * @{
  */
-/* AXIVION Disable Style MisraC2012Directive-4.9 MisraC2012-20.7 Generic-NoUnsafeMacro CertC-PRE01: Function-like macro
-   needed for this feature. Parenthesis stripping is intended here. */
+/* AXIVION 禁用风格 MisraC2012Directive-4.9 MisraC2012-20.7 Generic-NoUnsafeMacro CertC-PRE01: 
+   此功能需要类似函数的宏。此处旨在去除括号。 */
 #define GEN_GET_ARGS(...)   __VA_ARGS__
 #define GEN_STRIP_PARENS(x) x
 /**@}*/
-/** Strips a token of its surrounding parenthesis. */
+/** 去除标记周围的外层括号。 */
 #define GEN_STRIP(x) GEN_STRIP_PARENS(GEN_GET_ARGS x)
-/* AXIVION Enable Style MisraC2012Directive-4.9 MisraC2012-20.7 Generic-NoUnsafeMacro: */
+/* AXIVION 启用风格 MisraC2012Directive-4.9 MisraC2012-20.7 Generic-NoUnsafeMacro: */
 
-/** Defines the word size in bytes of the platform */
+/** 定义平台的字长（以字节为单位） */
 #if defined(__TI_COMPILER_VERSION__) && defined(__ARM_32BIT_STATE) && defined(__TMS470__)
 #define GEN_BYTES_PER_WORD (4u)
 #elif defined(UNITY_UNIT_TEST)
-/* since this define only affects the task size, it can be safely set in unit
-   tests to the value that is used in the embedded platform */
+/* 由于此定义仅影响任务大小，在单元测试中可以安全地将其设置为
+   嵌入式平台上使用的值 */
 #define GEN_BYTES_PER_WORD (4u)
 #elif defined(DOCUMENTATION)
 #define GEN_BYTES_PER_WORD (4u)
 #else
-#warning "Unspecified platform default to 4 bytes per word."
+#warning "未指定的平台，默认为每字 4 字节。"
 #define GEN_BYTES_PER_WORD (4u)
 #endif
 
-/*========== Extern Constant and Variable Declarations ======================*/
+/*========== 外部常量和变量声明 ============================================*/
 
-/*========== Extern Function Prototypes =====================================*/
+/*========== 外部函数原型 ===================================================*/
 
-/*========== Externalized Static Functions Prototypes (Unit Test) ===========*/
+/*========== 外部化的静态函数原型（单元测试） ===============================*/
 #ifdef UNITY_UNIT_TEST
 #endif
 
